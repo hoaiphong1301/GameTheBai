@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Quest - Game Thẻ Bài</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Trang Chính - Màn chơi */
+        .levels-container {
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+
+        .main-page h2 {
+            color: #fff;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            width: 100%;
+            justify-items: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .level-bubble {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 3px solid transparent;
+            position: relative;
+            font-weight: bold;
+        }
+
+        .level-bubble .level-num {
+            font-size: 24px;
+            color: #fff;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .level-bubble .level-star {
+            font-size: 12px;
+            color: #ffd700;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 5px;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .level-bubble.tier-1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .level-bubble.tier-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .level-bubble.tier-3 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .level-bubble.tier-4 {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .level-bubble.tier-5 {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .level-bubble:hover:not(.locked) {
+            transform: scale(1.15);
+            box-shadow: 0 8px 25px rgba(233, 69, 96, 0.6);
+            border-color: #e94560;
+        }
+
+        .level-bubble.locked {
+            background: linear-gradient(135deg, #333 0%, #555 100%);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .level-bubble.locked:hover {
+            transform: none;
+            border-color: transparent;
+        }
+
+        .level-bubble.locked .level-num {
+            font-size: 20px;
+        }
+
+        .level-bubble.completed {
+            border: 3px solid #ffd700;
+        }
+
+        .level-bubble.completed::after {
+            display: none;
+        }
+
+        .level-bubble:active:not(.locked) {
+            transform: scale(0.95);
+        }
+
+        /* Tablet */
+        @media (max-width: 1200px) {
+            .levels-grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 12px;
+            }
+
+            .level-bubble {
+                width: 70px;
+                height: 70px;
+            }
+
+            .level-bubble .level-num {
+                font-size: 18px;
+            }
+        }
+
+        /* Mobile - Tablet nhỏ */
+        @media (max-width: 768px) {
+            .levels-container {
+                padding: 12px;
+            }
+
+            .main-page h2 {
+                margin-bottom: 20px;
+                font-size: 20px;
+            }
+
+            .levels-grid {
+                grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+                gap: 10px;
+            }
+
+            .level-bubble {
+                width: 65px;
+                height: 65px;
+            }
+
+            .level-bubble .level-num {
+                font-size: 16px;
+            }
+
+            .level-bubble .level-star {
+                font-size: 10px;
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        /* Mobile nhỏ */
+        @media (max-width: 480px) {
+            .levels-container {
+                padding: 8px;
+            }
+
+            .main-page h2 {
+                margin-bottom: 15px;
+                font-size: 18px;
+            }
+
+            .levels-grid {
+                grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+                gap: 8px;
+            }
+
+            .level-bubble {
+                width: 55px;
+                height: 55px;
+            }
+
+            .level-bubble .level-num {
+                font-size: 14px;
+            }
+
+            .level-bubble .level-star {
+                font-size: 9px;
+                width: 16px;
+                height: 16px;
+                padding: 1px 3px;
+            }
+
+            .level-bubble:hover:not(.locked) {
+                transform: scale(1.1);
+            }
+
+            .level-bubble.completed::after {
+                font-size: 16px;
+                width: 24px;
+                height: 24px;
+                right: -3px;
+                top: -3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <div class="game-header">
+            <div class="game-title">🎴 Card Quest</div>
+            <div class="player-stats">
+                <div class="stat-item">
+                    <div class="stat-icon">💰</div>
+                    <div>
+                        <div class="stat-label">TIỀN</div>
+                        <div class="stat-value" id="money">5000</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">💎</div>
+                    <div>
+                        <div class="stat-label">KIM CƯƠNG</div>
+                        <div class="stat-value" id="diamond">250</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">⚡</div>
+                    <div>
+                        <div class="stat-label">LỰC CHIẾN</div>
+                        <div class="stat-value" id="power">850</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="game-content">
+            <!-- Trang Chính - Màn Chơi -->
+            <div class="page active main-page" data-page="main">
+                <h2>🎮 Màn Chơi</h2>
+                <div class="levels-container">
+                    <div class="levels-grid" id="levelsGrid"></div>
+                </div>
+            </div>
+
+            <!-- Trang Bộ Sưu Tập -->
+            <div class="page collection-page" data-page="collection">
+                <h2>🎴 Bộ Sưu Tập Thẻ Bài</h2>
+                <div class="collection-stats">
+                    <div>📊 Thẻ sở hữu: <strong id="ownedCount">8</strong>/54 | Tổng lực chiến: <strong>4250</strong></div>
+                </div>
+
+                <!-- Nút chuyển đổi Sở hữu / Chưa sở hữu -->
+                <div class="collection-filters">
+                    <button class="filter-btn active" onclick="filterCollection('owned')">✓ Thẻ Sở Hữu</button>
+                    <button class="filter-btn" onclick="filterCollection('all')">📚 Tất Cả Thẻ</button>
+                </div>
+
+                <!-- Các tab độ hiếm -->
+                <div class="rarity-tabs">
+                    <button class="rarity-tab active" onclick="switchRarity('common')">
+                        <span class="rarity-dot common"></span>
+                        Common (15)
+                    </button>
+                    <button class="rarity-tab" onclick="switchRarity('rare')">
+                        <span class="rarity-dot rare"></span>
+                        Rare (15)
+                    </button>
+                    <button class="rarity-tab" onclick="switchRarity('super-rare')">
+                        <span class="rarity-dot super-rare"></span>
+                        Super Rare (10)
+                    </button>
+                    <button class="rarity-tab" onclick="switchRarity('ultra-rare')">
+                        <span class="rarity-dot ultra-rare"></span>
+                        Ultra Rare (8)
+                    </button>
+                    <button class="rarity-tab" onclick="switchRarity('legendary')">
+                        <span class="rarity-dot legendary"></span>
+                        Legendary (6)
+                    </button>
+                </div>
+
+                <!-- Lưới thẻ -->
+                <div class="collection-cards-grid" id="collectionGrid">
+                    <!-- Thẻ sẽ được tạo bằng JavaScript -->
+                </div>
+            </div>
+
+            <!-- Trang Cửa Hàng -->
+            <div class="page shop-page" data-page="shop">
+                <h2>🎁 Cửa Hàng Gacha</h2>
+                
+                <!-- Thông tin tiền -->
+                <div class="shop-info">
+                    <div class="money-display">💰 Vàng: <span id="shopMoney">1000000</span></div>
+                </div>
+
+                <!-- Tab chọn loại rương -->
+                <div class="gacha-tabs">
+                    <button class="gacha-tab active" onclick="selectChest('normal')">
+                        🎴 Rương Thường
+                        <div class="gacha-rate">100 vàng</div>
+                    </button>
+                    <button class="gacha-tab" onclick="selectChest('rare')">
+                        🎴 Rương Hiếm
+                        <div class="gacha-rate">500 vàng</div>
+                    </button>
+                    <button class="gacha-tab" onclick="selectChest('legend')">
+                        🎴 Rương Truyền Thuyết
+                        <div class="gacha-rate">1000 vàng</div>
+                    </button>
+                </div>
+
+                <!-- Hiển thị rương được chọn -->
+                <div id="selectedChestInfo" class="chest-info">
+                    <h3>🎴 Rương Thường</h3>
+                    <div class="rates-table">
+                        <div class="rate-row">
+                            <span class="rarity-badge common">Trắng (Common)</span>
+                            <span class="rate-percent">80%</span>
+                        </div>
+                        <div class="rate-row">
+                            <span class="rarity-badge rare">Xanh Lá (Rare)</span>
+                            <span class="rate-percent">20%</span>
+                        </div>
+                    </div>
+                    <div class="gacha-buttons">
+                        <button class="gacha-btn-pull" onclick="pullChest(1)">📦 Mở x1 (100 vàng)</button>
+                        <button class="gacha-btn-pull" onclick="pullChest(10)">📦 Mở x10 (1000 vàng)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trang Cài Đặt -->
+            <div class="page settings-page" data-page="settings">
+                <h2>Cài Đặt</h2>
+                
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <span>🔊 Âm Thanh Nền</span>
+                        <div class="toggle-switch active" id="bgmToggle">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    <div class="setting-desc">Bật/Tắt nhạc nền của trò chơi</div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <span>🔉 Hiệu Ứng Âm Thanh</span>
+                        <div class="toggle-switch active" id="sfxToggle">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    <div class="setting-desc">Bật/Tắt âm thanh hiệu ứng</div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <span>🎮 Độ Khó</span>
+                    </div>
+                    <select>
+                        <option>Dễ</option>
+                        <option selected>Bình thường</option>
+                        <option>Khó</option>
+                    </select>
+                    <div class="setting-desc">Chọn độ khó chơi game</div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <span>👤 Ngôn Ngữ</span>
+                    </div>
+                    <select>
+                        <option selected>Tiếng Việt</option>
+                        <option>English</option>
+                        <option>中文</option>
+                    </select>
+                    <div class="setting-desc">Chọn ngôn ngữ giao diện</div>
+                </div>
+
+                <button class="setting-button" onclick="resetProgress()">🔄 Reset Tiến Trình</button>
+                <button class="setting-button" style="background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);">📱 Liên Hệ Hỗ Trợ</button>
+            </div>
+        </div>
+
+        <!-- Card Selection Page -->
+        <div class="page card-selection-page" data-page="card-selection">
+            <div class="selection-header">
+                <button class="selection-back-btn" onclick="cancelCardSelection()">🔙</button>
+                <h2 id="levelNameDisplay">Màn 1</h2>
+                <button class="selection-start-btn" id="confirmSelectionBtn" onclick="confirmCardSelection()" disabled>
+                    ✓ Bắt Đầu
+                </button>
+            </div>
+
+            <div class="selection-container">
+                <!-- Rarity Filter Tabs -->
+                <div class="selection-rarity-tabs">
+                    <button class="rarity-tab active" data-rarity="all" onclick="filterSelectionByRarity('all')">
+                        🎴 Tất Cả
+                    </button>
+                    <button class="rarity-tab" data-rarity="common" onclick="filterSelectionByRarity('common')">
+                        ⚪ Trắng
+                    </button>
+                    <button class="rarity-tab" data-rarity="rare" onclick="filterSelectionByRarity('rare')">
+                        🟢 Xanh Lá
+                    </button>
+                    <button class="rarity-tab" data-rarity="super-rare" onclick="filterSelectionByRarity('super-rare')">
+                        🔵 Xanh Lam
+                    </button>
+                    <button class="rarity-tab" data-rarity="ultra-rare" onclick="filterSelectionByRarity('ultra-rare')">
+                        🟣 Tím
+                    </button>
+                    <button class="rarity-tab" data-rarity="legendary" onclick="filterSelectionByRarity('legendary')">
+                        🟠 Cam
+                    </button>
+                </div>
+
+                <div class="selection-info">
+                    <span class="selected-count">Đã chọn: <strong id="selectedCardCount">0</strong>/5</span>
+                </div>
+                
+                <div class="selection-grid-scroll">
+                    <div class="selection-grid" id="selectionGrid">
+                        <!-- Thẻ sở hữu sẽ được tạo bằng JS -->
+                    </div>
+                </div>
+
+                <div class="selection-actions">
+                    <button class="selection-btn cancel" onclick="cancelCardSelection()">
+                        🔙 Quay Lại
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battle Page -->
+        <div class="page battle-page" data-page="battle">
+            <div class="battle-top">
+                <h2>⚔️ Trận Đấu - Màn <span id="battleLevelNum">1</span></h2>
+                <button class="exit-battle-btn" onclick="exitBattle()">🔙</button>
+            </div>
+
+            <div class="battle-main">
+                <!-- Player Deck (at top for easy access) -->
+                <div class="player-deck">
+                    <h4>🎴 Bộ Thẻ Của Bạn</h4>
+                    <div class="deck-scroll-container">
+                        <div class="deck-grid" id="playerDeck">
+                            <!-- Thẻ sẽ được tạo bằng JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons (moved to top) -->
+                <div class="battle-actions">
+                    <button class="action-btn confirm-btn" id="confirmBtn" onclick="confirmBattleAction()">⚔️ Chọn Thẻ Để Tấn Công</button>
+                    <button class="action-btn keep-btn" id="keepBtn" onclick="keepBattleCard()" style="display: none;">🔄 Giữ Thẻ Hiện Tại</button>
+                    <button class="action-btn change-btn" id="changeBtn" onclick="changeBattleCard()" style="display: none;">↔️ Đổi Thẻ Khác</button>
+                </div>
+
+                <!-- Battle Container (enemy vs player) -->
+                <div class="battle-container">
+                    <!-- Enemy Side -->
+                    <div class="battle-side enemy-side">
+                        <h3>Đối Thủ</h3>
+                        <div class="battle-deck-info">
+                            <span class="deck-count">Thẻ còn: <strong id="enemyDeckCount">5</strong></span>
+                        </div>
+                        <div class="battle-field enemy-field">
+                            <div class="card-slot active" id="enemyCardSlot">
+                                <div class="card-placeholder">
+                                    <div style="font-size: 40px; margin-bottom: 5px;" id="enemyCardEmoji">🐱</div>
+                                    <div class="card-name" id="enemyCardName">Mèo Rừng</div>
+                                    <div class="card-stats">
+                                        <div>⚔️ <span id="enemyCardAtk">45</span></div>
+                                        <div>❤️ <span id="enemyCardHp">35</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="battle-health-bar">
+                            <div class="health-fill" id="enemyHealthBar"></div>
+                        </div>
+                        <div class="health-text">HP: <span id="enemyHP">0</span>/<span id="enemyMaxHP">0</span></div>
+                    </div>
+
+                    <!-- VS -->
+                    <div class="battle-vs">VS</div>
+
+                    <!-- Player Side -->
+                    <div class="battle-side player-side">
+                        <h3>Người Chơi</h3>
+                        <div class="battle-deck-info">
+                            <span class="deck-count">Thẻ còn: <strong id="playerDeckCount">5</strong></span>
+                        </div>
+                        <div class="battle-field player-field">
+                            <div class="card-slot active" id="playerCardSlot">
+                                <div class="card-placeholder">
+                                    <div style="font-size: 40px; margin-bottom: 5px;" id="playerCardEmoji">🐕</div>
+                                    <div class="card-name" id="playerCardName">Chó</div>
+                                    <div class="card-stats">
+                                        <div>⚔️ <span id="playerCardAtk">48</span></div>
+                                        <div>❤️ <span id="playerCardHp">38</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="battle-health-bar">
+                            <div class="health-fill" id="playerHealthBar"></div>
+                        </div>
+                        <div class="health-text">HP: <span id="playerHP">0</span>/<span id="playerMaxHP">0</span></div>
+                    </div>
+                </div>
+
+                <!-- Turn Info -->
+                <div class="battle-info">
+                    <div class="turn-info">
+                        <h3 id="turnText">Round 1 - Chọn Thẻ</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Bar -->
+        <div class="game-nav">
+            <div class="nav-item active" onclick="switchPage('main')">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Trang Chính</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('collection')">
+                <div class="nav-icon">📚</div>
+                <div class="nav-label">Bộ Sưu Tập</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('shop')">
+                <div class="nav-icon">🛍️</div>
+                <div class="nav-label">Cửa Hàng</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('settings')">
+                <div class="nav-icon">⚙️</div>
+                <div class="nav-label">Cài Đặt</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Popup Gacha Result -->
+    <div id="gacha-modal" class="gacha-modal">
+        <div class="gacha-modal-content">
+            <div class="gacha-modal-header">
+                <h2>🎉 Kết Quả Mở Rương</h2>
+                <button class="gacha-close-btn" onclick="closeGachaModal()">&times;</button>
+            </div>
+            <div class="gacha-modal-body">
+                <div id="gacha-results"></div>
+            </div>
+            <div class="gacha-modal-footer">
+                <button class="gacha-confirm-btn" onclick="closeGachaModal()">✓ Xác Nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Đóng modal gacha
+        function closeGachaModal() {
+            const modal = document.getElementById('gacha-modal');
+            modal.style.display = 'none';
+        }
+
+        // Hiển thị modal gacha
+        function showGachaModal(uniqueCards, totalRefund) {
+            const modal = document.getElementById('gacha-modal');
+            const resultsDiv = document.getElementById('gacha-results');
+            let htmlContent = '';
+
+            if (uniqueCards.length > 0) {
+                htmlContent += '<div class="gacha-new-cards"><h3>🎁 Thẻ Mới Nhận Được:</h3>';
+                uniqueCards.forEach(card => {
+                    const rarityName = {
+                        'common': '⚪ Trắng',
+                        'rare': '🟢 Xanh Lá',
+                        'super-rare': '🔵 Xanh Lam',
+                        'ultra-rare': '🟣 Tím',
+                        'legendary': '🟠 Cam'
+                    }[card.rarity];
+                    
+                    htmlContent += `
+                        <div class="gacha-card-result">
+                            <div class="gacha-card-emoji">${card.emoji}</div>
+                            <div class="gacha-card-info">
+                                <div class="gacha-card-name">${card.name}</div>
+                                <div class="gacha-card-rarity">${rarityName}</div>
+                                <div class="gacha-card-stats">⚔️ ${card.atk} | ❤️ ${card.hp}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                htmlContent += '</div>';
+            }
+
+            if (totalRefund > 0) {
+                htmlContent += `
+                    <div class="gacha-refund">
+                        <div class="refund-icon">💰</div>
+                        <div class="refund-text">Nhận hoàn tiền: <strong>${totalRefund} vàng</strong> (từ thẻ trùng)</div>
+                    </div>
+                `;
+            }
+
+            if (uniqueCards.length === 0 && totalRefund === 0) {
+                htmlContent += '<div class="gacha-no-result">❌ Không có thẻ mới hoặc tiền hoàn</div>';
+            }
+
+            resultsDiv.innerHTML = htmlContent;
+            modal.style.display = 'flex';
+        }
+        
+        // ==================== BACKGROUND MUSIC ====================
+        // Tạo audio element cho nhạc nền
+        const backgroundMusic = new Audio('nhac/Deltarune - Before the Story (Remix).mp3');
+        backgroundMusic.loop = true;
+        backgroundMusic.volume = 0.3;
+        
+        // Khởi tạo music khi trang load
+        window.addEventListener('load', function() {
+            backgroundMusic.play().catch(err => {
+                console.log('Không thể auto play nhạc:', err);
+            });
+        });
+        
+        // Dữ liệu tất cả 54 thẻ bài
+        const allCards = [
+            // Common (Trắng) - 15 loài
+            { name: 'Mèo Rừng', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 12, hp: 18, owned: true, emoji: '🐱' },
+            { name: 'Chó', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 10, hp: 20, owned: true, emoji: '🐕' },
+            { name: 'Sư Tử Biển', type: 'carnivore', habitat: 'water', rarity: 'common', atk: 10, hp: 20, owned: true, emoji: '🦭' },
+            { name: 'Gấu Trúc', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 6, hp: 24, owned: true, emoji: '🐼' },
+            { name: 'Rái Cá', type: 'herbivore', habitat: 'water', rarity: 'common', atk: 15, hp: 15, owned: true, emoji: '🦦' },
+            { name: 'Hươu', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 5, hp: 25, owned: true, emoji: '🦌' },
+            { name: 'Cá chép', type: 'omnivore', habitat: 'water', rarity: 'common', atk: 2, hp: 28, owned: true, emoji: '🐠' },
+            { name: 'Chuột', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 10, hp: 20, owned: true, emoji: '🐭' },
+            { name: 'Chim Bồ Câu', type: 'omnivore', habitat: 'sky', rarity: 'common', atk: 10, hp: 20, owned: true, emoji: '🕊️' },
+            { name: 'Qụa', type: 'omnivore', habitat: 'sky', rarity: 'common', atk: 18, hp: 12, owned: false, emoji: '🐓' },
+            { name: 'Mèo', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 11, hp: 19, owned: false, emoji: '🐈' },
+            { name: 'Thỏ', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 7, hp: 23, owned: false, emoji: '🐰' },
+            { name: 'Thiên Nga', type: 'omnivore', habitat: 'water', rarity: 'common', atk: 1, hp: 29, owned: false, emoji: '🦢' },
+            { name: 'Gà', type: 'omnivore', habitat: 'land', rarity: 'common', atk: 15, hp: 15, owned: false, emoji: '🐓' },
+            { name: 'Nai', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 5, hp: 25, owned: false, emoji: '🦌' },
+            
+            // Rare (Xanh Lá) - 15 loài
+            { name: 'Cá Kiếm', type: 'carnivore', habitat: 'water', rarity: 'rare', atk: 20, hp: 30, owned: true, emoji: '🐟' },
+            { name: 'Cá Heo', type: 'omnivore', habitat: 'water', rarity: 'rare', atk: 15, hp: 35, owned: true, emoji: '🐬' },
+            { name: 'Chim Ưng', type: 'carnivore', habitat: 'sky', rarity: 'rare', atk: 30, hp: 20, owned: false, emoji: '🦅' },
+            { name: 'Báo Đốm', type: 'carnivore', habitat: 'land', rarity: 'rare', atk: 20, hp: 30, owned: false, emoji: '🐆' },
+            { name: 'Chim công', type: 'carnivore', habitat: 'land', rarity: 'rare', atk: 10, hp: 40, owned: false, emoji: '🦚' },
+            { name: 'Khỉ Đột', type: 'omnivore', habitat: 'land', rarity: 'rare', atk: 25, hp: 25, owned: false, emoji: '🦍' },
+            { name: 'Kangaroo', type: 'herbivore', habitat: 'land', rarity: 'rare', atk: 21, hp: 29, owned: false, emoji: '🦘' },
+            { name: 'Bò Mộng', type: 'carnivore', habitat: 'water', rarity: 'rare', atk: 15, hp: 35, owned: false, emoji: '🦬' },
+            { name: 'Rắn đuôi chuông', type: 'carnivore', habitat: 'land', rarity: 'rare', atk: 30, hp: 20, owned: false, emoji: '🐍' },
+            { name: 'Lửng mật', type: 'omnivore', habitat: 'sky', rarity: 'rare', atk: 25, hp: 25, owned: false, emoji: '🦡' },
+            { name: 'Nhím', type: 'carnivore', habitat: 'water', rarity: 'rare', atk: 17, hp: 33, owned: false, emoji: '🦔' },
+            { name: 'Piranha', type: 'omnivore', habitat: 'water', rarity: 'rare', atk: 40, hp: 10, owned: false, emoji: '🐠' },
+            { name: 'Cá Đèn Lồng', type: 'carnivore', habitat: 'water', rarity: 'rare', atk: 10, hp: 40, owned: false, emoji: '🐙' },
+            { name: 'Sói', type: 'herbivore', habitat: 'land', rarity: 'rare', atk: 20, hp: 30, owned: false, emoji: '🐺' },
+            { name: 'Kền Kền', type: 'carnivore', habitat: 'sky', rarity: 'rare', atk: 15, hp: 35, owned: false, emoji: '🦅' },
+            
+            // Super Rare (Xanh Dương) - 10 loài
+            { name: 'Đại Bàng', type: 'carnivore', habitat: 'sky', rarity: 'super-rare', atk: 60, hp: 40, owned: false, emoji: '🦅' },
+            { name: 'Sư Tử', type: 'carnivore', habitat: 'land', rarity: 'super-rare', atk: 50, hp: 50, owned: false, emoji: '🦁' },
+            { name: 'Cá Voi Sát Thủ', type: 'carnivore', habitat: 'water', rarity: 'super-rare', atk: 40, hp: 60, owned: false, emoji: '🐋' },
+            { name: 'Cá Mập Trắng', type: 'omnivore', habitat: 'water', rarity: 'super-rare', atk: 48, hp: 52, owned: false, emoji: '🦈' },
+            { name: 'Hổ', type: 'carnivore', habitat: 'land', rarity: 'super-rare', atk: 55, hp: 45, owned: false, emoji: '🐯' },
+            { name: 'Tê giác', type: 'carnivore', habitat: 'land', rarity: 'super-rare', atk: 35, hp: 65, owned: false, emoji: '🦏' },
+            { name: 'Voi', type: 'carnivore', habitat: 'land', rarity: 'super-rare', atk: 30, hp: 70, owned: false, emoji: '🐘' },
+            { name: 'Cá Sấu', type: 'carnivore', habitat: 'water', rarity: 'super-rare', atk: 40, hp: 60, owned: false, emoji: '🐊' },
+            { name: 'Rắn Hổ Mang', type: 'omnivore', habitat: 'land', rarity: 'super-rare', atk: 70, hp: 30, owned: false, emoji: '🐍' },
+            { name: 'Hà mã', type: 'omnivore', habitat: 'water', rarity: 'super-rare', atk: 42, hp: 58, owned: false, emoji: '🦛' },
+            
+            // Ultra Rare (Tím) - 8 loài
+            { name: 'T-Rex', type: 'carnivore', habitat: 'sky', rarity: 'ultra-rare', atk: 200, hp: 200, owned: false, emoji: '🦖' },
+            { name: 'Mosasaurus', type: 'omnivore', habitat: 'land', rarity: 'ultra-rare', atk: 190, hp: 210, owned: false, emoji: '🦈' },
+            { name: 'Pteranodon', type: 'carnivore', habitat: 'land', rarity: 'ultra-rare', atk: 300, hp: 100, owned: false, emoji: '🦅' },
+            { name: 'Titannoboa', type: 'carnivore', habitat: 'water', rarity: 'ultra-rare', atk: 100, hp: 300, owned: false, emoji: '🐍' },
+            { name: 'Megalodon', type: 'carnivore', habitat: 'sky', rarity: 'ultra-rare', atk: 250, hp: 150, owned: false, emoji: '🦈' },
+            { name: 'Cá Voi Xanh', type: 'carnivore', habitat: 'land', rarity: 'ultra-rare', atk: 100, hp: 300, owned: false, emoji: '🐳' },
+            { name: 'Spinosaurus', type: 'carnivore', habitat: 'water', rarity: 'ultra-rare', atk: 210, hp: 190, owned: false, emoji: '🦖' },
+            { name: 'Voi ma mút', type: 'carnivore', habitat: 'sky', rarity: 'ultra-rare', atk: 80, hp: 320, owned: false, emoji: '🦣' },
+            
+            // Legendary (Cam) - 6 loài
+            { name: 'Phoenix', type: 'carnivore', habitat: 'sky', rarity: 'legendary', atk: 400, hp: 600, owned: true, emoji: '🔥' },
+            { name: 'Rồng', type: 'carnivore', habitat: 'sky', rarity: 'legendary', atk: 500, hp: 500, owned: false, emoji: '🐉' },
+            { name: 'Kraken', type: 'carnivore', habitat: 'water', rarity: 'legendary', atk: 350, hp: 650, owned: false, emoji: '🐙' },
+            { name: 'Hydra', type: 'carnivore', habitat: 'water', rarity: 'legendary', atk: 500, hp: 500, owned: false, emoji: '🐍' },
+            { name: 'Chimera', type: 'carnivore', habitat: 'land', rarity: 'legendary', atk: 450, hp: 550, owned: false, emoji: '🦁' },
+            { name: 'Kì lân', type: 'omnivore', habitat: 'land', rarity: 'legendary', atk: 100, hp: 900, owned: false, emoji: '🦄' }
+        ];
+
+        // Khởi tạo maxHp (HP gốc không bị thay đổi) cho tất cả thẻ
+        allCards.forEach(card => {
+            card.maxHp = card.hp;
+            card.currentHp = card.hp;
+        });
+
+        // Biến toàn cục
+        let currentRarity = 'common';
+        let showOwnedOnly = true;
+
+        // Lọc thẻ theo tiêu chí
+        function filterCards() {
+            let filtered = allCards.filter(card => card.rarity === currentRarity);
+            if (showOwnedOnly) {
+                filtered = filtered.filter(card => card.owned);
+            }
+            return filtered;
+        }
+
+        // Tạo HTML cho một thẻ
+        function createCardHTML(card) {
+            const ownedClass = card.owned ? '' : 'unowned';
+            const typeIcon = card.type === 'carnivore' ? '🍖' : (card.type === 'herbivore' ? '🌿' : '🥘');
+            const habitatIcon = card.habitat === 'land' ? '🏜️' : (card.habitat === 'water' ? '🌊' : '🌤️');
+            
+            return `
+                <div class="animal-card ${card.rarity} ${ownedClass}">
+                    <div class="card-header">
+                        <div class="card-type ${card.type}">${typeIcon}</div>
+                        <div class="card-habitat ${card.habitat}">${habitatIcon}</div>
+                    </div>
+                    <div class="card-image">
+                        <div style="font-size: 100px; text-align: center; padding: 20px;">${card.emoji}</div>
+                    </div>
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-stats">
+                        <div class="stat attack">⚔️ ${card.atk}</div>
+                        <div class="stat health">❤️ ${card.hp}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Hiển thị thẻ
+        function renderCards() {
+            const grid = document.getElementById('collectionGrid');
+            if (!grid) return;
+            
+            const cards = filterCards();
+            grid.innerHTML = cards.map(card => createCardHTML(card)).join('');
+            
+            // Cập nhật số thẻ sở hữu
+            const owned = allCards.filter(c => c.owned).length;
+            const ownedCount = document.getElementById('ownedCount');
+            if (ownedCount) {
+                ownedCount.textContent = owned;
+            }
+        }
+
+        // Chuyển tab độ hiếm
+        function switchRarity(rarity) {
+            currentRarity = rarity;
+            
+            // Cập nhật active tab
+            document.querySelectorAll('.rarity-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.closest('.rarity-tab').classList.add('active');
+            
+            renderCards();
+        }
+
+        // Lọc sở hữu / tất cả
+        function filterCollection(mode) {
+            showOwnedOnly = mode === 'owned';
+            
+            // Cập nhật active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderCards();
+        }
+
+        // Chuyển trang
+        function switchPage(pageName) {
+            // Ẩn tất cả các trang
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('active'));
+
+            // Hiển thị trang được chọn
+            const selectedPage = document.querySelector(`[data-page="${pageName}"]`);
+            if (selectedPage) {
+                selectedPage.classList.add('active');
+            }
+
+            // Cập nhật nav item active - chỉ khi có event
+            if (event && event.target) {
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => item.classList.remove('active'));
+                const navItem = event.target.closest('.nav-item');
+                if (navItem) {
+                    navItem.classList.add('active');
+                }
+            }
+
+            // Khởi tạo lại các hàm khi chuyển trang
+            if (pageName === 'main') {
+                loadProgress(); // Load progress before generating levels
+                generateLevels();
+            } else if (pageName === 'collection') {
+                renderCards();
+            } else if (pageName === 'shop') {
+                initShopButtons();
+            } else if (pageName === 'settings') {
+                initToggleSwitches();
+            }
+        }
+
+        // Debug function to check localStorage
+        function debugStorage() {
+            const saved = localStorage.getItem('gameProgress');
+            if (saved) {
+                const gameState = JSON.parse(saved);
+                console.log('🔍 DEBUG - localStorage content:');
+                console.log('  completedLevels:', gameState.completedLevels);
+                console.log('  levelStars:', gameState.levelStars);
+                console.log('  playerMoney:', gameState.playerMoney);
+            } else {
+                console.log('🔍 DEBUG - localStorage is empty');
+            }
+        }
+
+        // Tạo 100 màn chơi
+        function generateLevels() {
+            const container = document.getElementById('levelsGrid');
+            if (!container) return;
+            
+            container.innerHTML = '';
+
+            // Get completed levels from localStorage
+            const saved = localStorage.getItem('gameProgress');
+            let completedLevels = [];
+            let levelStars = {};
+            if (saved) {
+                try {
+                    const gameState = JSON.parse(saved);
+                    completedLevels = gameState.completedLevels || [];
+                    levelStars = gameState.levelStars || {};
+                    console.log('📊 Loaded from localStorage - Completed levels:', completedLevels, 'Stars:', levelStars);
+                } catch (e) {
+                    console.error('Error parsing saved data:', e);
+                }
+            } else {
+                console.log('📊 No saved data in localStorage');
+            }
+
+            for (let i = 1; i <= 50; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'level-bubble';
+                bubble.setAttribute('data-level', i);
+                
+                // Phân loại màu theo nhóm (mỗi nhóm 10 màn)
+                if (i <= 10) {
+                    bubble.classList.add('tier-1');
+                } else if (i <= 20) {
+                    bubble.classList.add('tier-2');
+                } else if (i <= 30) {
+                    bubble.classList.add('tier-3');
+                } else if (i <= 40) {
+                    bubble.classList.add('tier-4');
+                } else {
+                    bubble.classList.add('tier-5');
+                }
+
+                // Lock system: chỉ mở màn 1, sau đó mở dần dần
+                const isCompleted = completedLevels.includes(i);
+                const isPrevCompleted = i === 1 || completedLevels.includes(i - 1);
+
+                if (i <= 3 || completedLevels.includes(i - 1)) {
+                    console.log(`Level ${i}: isCompleted=${isCompleted}, isPrevCompleted=${isPrevCompleted}, locked=${!isPrevCompleted}`);
+                }
+
+                if (!isPrevCompleted) {
+                    bubble.classList.add('locked');
+                } else if (isCompleted) {
+                    bubble.classList.add('completed');
+                }
+
+                const levelNum = document.createElement('div');
+                levelNum.className = 'level-num';
+                levelNum.textContent = i;
+
+                const starContainer = document.createElement('div');
+                starContainer.className = 'level-star';
+                const stars = levelStars[i] || 0; // Get actual stars from saved data
+                starContainer.textContent = '⭐'.repeat(stars);
+
+                bubble.appendChild(levelNum);
+                bubble.appendChild(starContainer);
+
+                // Thêm sự kiện click
+                if (!bubble.classList.contains('locked')) {
+                    bubble.addEventListener('click', function() {
+                        startBattle(i);
+                    });
+                } else {
+                    bubble.addEventListener('click', function() {
+                        alert(`🔒 Màn ${i} chưa mở khóa!\nHoàn thành màn ${i - 1} để mở khóa.`);
+                    });
+                }
+
+                container.appendChild(bubble);
+            }
+        }
+
+        // Toggle Switch
+        function initToggleSwitches() {
+            const bgmToggle = document.getElementById('bgmToggle');
+            const sfxToggle = document.getElementById('sfxToggle');
+
+            if (bgmToggle && !bgmToggle.hasListener) {
+                bgmToggle.hasListener = true;
+                bgmToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    // Điều khiển nhạc nền
+                    if (this.classList.contains('active')) {
+                        backgroundMusic.play().catch(err => console.log('Không thể phát nhạc'));
+                    } else {
+                        backgroundMusic.pause();
+                    }
+                });
+            }
+
+            if (sfxToggle && !sfxToggle.hasListener) {
+                sfxToggle.hasListener = true;
+                sfxToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                });
+            }
+        }
+
+        // Reset Progress
+        // Lưu tiến trình vào localStorage
+        function saveProgress() {
+            // Get current progress from localStorage if it exists
+            const saved = localStorage.getItem('gameProgress');
+            let completedLevels = [];
+            let levelStars = {};
+            
+            if (saved) {
+                try {
+                    const gameState = JSON.parse(saved);
+                    completedLevels = gameState.completedLevels || [];
+                    levelStars = gameState.levelStars || {};
+                } catch (e) {}
+            }
+            
+            const gameState = {
+                playerMoney: playerMoney,
+                cards: allCards.map(card => ({
+                    name: card.name,
+                    owned: card.owned
+                })),
+                completedLevels: completedLevels,
+                levelStars: levelStars
+            };
+            localStorage.setItem('gameProgress', JSON.stringify(gameState));
+            console.log('💾 Saved progress:', gameState);
+        }
+
+        // Tải tiến trình từ localStorage
+        function loadProgress() {
+            const saved = localStorage.getItem('gameProgress');
+            if (saved) {
+                try {
+                    const gameState = JSON.parse(saved);
+                    playerMoney = gameState.playerMoney || 5000;
+                    
+                    // Cập nhật owned status cho các thẻ
+                    if (gameState.cards) {
+                        gameState.cards.forEach(savedCard => {
+                            const card = allCards.find(c => c.name === savedCard.name);
+                            if (card) {
+                                card.owned = savedCard.owned;
+                            }
+                        });
+                    }
+                    
+                    console.log('📊 Loaded from localStorage - Money:', playerMoney, 'Cards:', gameState.cards?.length || 0);
+                    updateMoney();
+                } catch (e) {
+                    console.error('Lỗi khi tải tiến trình:', e);
+                }
+            } else {
+                console.log('📊 No saved data in localStorage - starting fresh');
+            }
+        }
+
+        function resetProgress() {
+            if (confirm('⚠️ Bạn có chắc chắn muốn reset tiến trình? Hành động này không thể hoàn tác!')) {
+                alert('✅ Tiến trình đã được reset!');
+                
+                // Reset tất cả thẻ về chưa sở hữu
+                allCards.forEach(card => {
+                    card.owned = false;
+                });
+                
+                // Reset playerMoney
+                playerMoney = 5000;
+                
+                // Lưu gameState mới (tất cả thẻ owned = false)
+                const emptyGameState = {
+                    playerMoney: 5000,
+                    cards: allCards.map(card => ({
+                        name: card.name,
+                        owned: false
+                    })),
+                    completedLevels: [],
+                    levelStars: {}
+                };
+                localStorage.setItem('gameProgress', JSON.stringify(emptyGameState));
+                
+                // Reload page để reset hoàn toàn
+                location.reload();
+            }
+        }
+
+        // Tương tác với các nút cửa hàng
+        // ==================== BATTLE SYSTEM ====================
+        
+        // Level system with star ratings
+        const levelSystem = {
+            // Star thresholds scale with difficulty
+            getStarThresholds: function(level) {
+                const difficulty = Math.min(Math.floor((level - 1) / 10), 4); // 0-4 tiers
+                const baseThresholds = [
+                    { star1: 10, star2: 50, star3: 100 },     // Levels 1-10
+                    { star1: 20, star2: 70, star3: 130 },     // Levels 11-20
+                    { star1: 30, star2: 90, star3: 160 },     // Levels 21-30
+                    { star1: 40, star2: 110, star3: 190 },    // Levels 31-40
+                    { star1: 50, star2: 130, star3: 220 }     // Levels 41-50
+                ];
+                return baseThresholds[difficulty];
+            },
+            
+            // Calculate stars based on remaining player HP
+            calculateStars: function(level, remainingHp) {
+                const thresholds = this.getStarThresholds(level);
+                if (remainingHp > thresholds.star3) return 3;
+                if (remainingHp > thresholds.star2) return 2;
+                if (remainingHp > thresholds.star1) return 1;
+                return 0;
+            },
+            
+            // Gold rewards per star (500 base + star bonus)
+            getGoldReward: function(stars) {
+                return 500 + (stars * 100); // 500 base + (0, 100, 200, or 300) = 500, 600, 700, or 800 gold
+            }
+        };
+        
+        // Bot enemies cho từng level - 50 levels with increasing difficulty
+        // Generate enemy levels using existing cards from allCards
+        // Don't pre-generate; create fresh enemy decks for each battle
+        
+        // Function to create enemy level
+        function createEnemyLevel(levelNum) {
+            // Calculate which cards to use based on level and rarity
+            let availableCards = [];
+            
+            // Levels 1-10: Common cards (ATK: 1-18, HP: 12-29)
+            if (levelNum <= 10) {
+                availableCards = allCards.filter(c => c.rarity === 'common');
+            }
+            // Levels 11-20: Rare cards (ATK: 10-40, HP: 10-40)
+            else if (levelNum <= 20) {
+                availableCards = allCards.filter(c => c.rarity === 'rare');
+            }
+            // Levels 21-30: Super Rare cards (ATK: 30-70, HP: 30-70)
+            else if (levelNum <= 30) {
+                availableCards = allCards.filter(c => c.rarity === 'super-rare');
+            }
+            // Levels 31-40: Ultra Rare cards (ATK: 80-300, HP: 100-320)
+            else if (levelNum <= 40) {
+                availableCards = allCards.filter(c => c.rarity === 'ultra-rare');
+            }
+            // Levels 41-50: Legendary cards (ATK: 100-500, HP: 500-900)
+            else {
+                availableCards = allCards.filter(c => c.rarity === 'legendary');
+            }
+            
+            // Select 5 random cards from available pool
+            const enemyDeck = [];
+            for (let i = 0; i < 5; i++) {
+                const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+                if (randomCard) {
+                    // Adjust stats based on level within each tier
+                    // Calculate position within tier (0-10 range)
+                    const tierPosition = ((levelNum - 1) % 10) / 10; // 0 to 0.9
+                    const statMultiplier = 1 + tierPosition * 0.3; // 0% to 30% boost within tier
+                    
+                    enemyDeck.push({
+                        name: randomCard.name,
+                        atk: Math.round(randomCard.atk * statMultiplier),
+                        hp: Math.round(randomCard.hp * statMultiplier),
+                        emoji: randomCard.emoji
+                    });
+                }
+            }
+            
+            return {
+                name: `Màn ${levelNum}`,
+                deck: enemyDeck
+            };
+        }
+        
+        // Keep level 1 for reference (will be overwritten above but showing structure)
+        // Old levelEnemies object continues below:
+        
+        // Battle state        // Battle state
+        let battleState = {
+            currentLevel: 1,
+            playerDeck: [],
+            selectedPlayerCard: null,
+            playerCardHP: 0,
+            playerField: null,
+            
+            enemyDeck: [],
+            selectedEnemyCard: null,
+            enemyCardHP: 0,
+            enemyField: null,
+            
+            round: 1,
+            phase: 'select', // select, waiting, result
+            waitingForEnemyChoice: false
+        };
+
+        // Start battle
+        // Track selected cards for battle
+        let selectedCardsForBattle = [];
+        let currentBattleLevel = 1;
+        let currentSelectionRarityFilter = 'all';
+
+        // Start battle - show card selection first
+        function startBattle(level) {
+            const enemy = createEnemyLevel(level); // Generate fresh enemy deck for this level
+            if (!enemy) {
+                alert('Màn chơi này chưa có!');
+                return;
+            }
+
+            // Lấy các thẻ sở hữu của người chơi
+            const ownedCards = allCards.filter(card => card.owned);
+            
+            // Reset HP của tất cả thẻ sở hữu khi vào màn mới (dùng maxHp - giá trị gốc)
+            ownedCards.forEach(card => {
+                card.currentHp = card.maxHp;
+            });
+            
+            if (ownedCards.length < 5) {
+                alert(`⚠️ Bạn cần có ít nhất 5 thẻ sở hữu để chiến đấu!`);
+                return;
+            }
+
+            currentBattleLevel = level;
+            selectedCardsForBattle = [];
+
+            // Render card selection page
+            renderCardSelection(ownedCards);
+            switchPage('card-selection');
+        }
+
+        // Render card selection page
+        // Filter selection by rarity
+        function filterSelectionByRarity(rarity) {
+            currentSelectionRarityFilter = rarity;
+            
+            // Update tab active state
+            document.querySelectorAll('.rarity-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-rarity="${rarity}"]`).classList.add('active');
+            
+            // Re-render with filter
+            const ownedCards = allCards.filter(card => card.owned);
+            renderCardSelection(ownedCards);
+        }
+
+        // Render card selection page
+        function renderCardSelection(ownedCards) {
+            // Reset HP của TẤT CẢ thẻ về giá trị gốc (maxHp)
+            allCards.forEach(card => {
+                card.currentHp = card.maxHp;
+            });
+            
+            const grid = document.getElementById('selectionGrid');
+            grid.innerHTML = '';
+
+            document.getElementById('levelNameDisplay').textContent = `🎴 Chọn 5 Thẻ - Màn ${currentBattleLevel}`;
+            document.getElementById('selectedCardCount').textContent = selectedCardsForBattle.length;
+
+            // Filter cards by rarity if selected
+            let filteredCards = ownedCards;
+            if (currentSelectionRarityFilter !== 'all') {
+                filteredCards = ownedCards.filter(card => card.rarity === currentSelectionRarityFilter);
+            }
+
+            if (filteredCards.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #aaa; padding: 20px;">Không có thẻ nào</div>';
+                return;
+            }
+
+            filteredCards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'selection-card';
+                if (selectedCardsForBattle.some(c => c.name === card.name)) {
+                    cardEl.classList.add('selected');
+                }
+
+                const rarityName = {
+                    'common': 'Trắng',
+                    'rare': 'Xanh Lá',
+                    'super-rare': 'Xanh Lam',
+                    'ultra-rare': 'Tím',
+                    'legendary': 'Cam'
+                }[card.rarity];
+
+                cardEl.innerHTML = `
+                    <div class="selection-card-emoji">${card.emoji}</div>
+                    <div class="selection-card-name">${card.name}</div>
+                    <div class="selection-card-stats">
+                        <span>⚔️${card.atk}</span>
+                        <span>❤️${card.hp}</span>
+                    </div>
+                    <div class="selection-card-rarity">${rarityName}</div>
+                `;
+
+                cardEl.onclick = () => toggleCardSelection(card);
+                grid.appendChild(cardEl);
+            });
+
+            // Enable/disable confirm button
+            const confirmBtn = document.getElementById('confirmSelectionBtn');
+            confirmBtn.disabled = selectedCardsForBattle.length !== 5;
+            if (selectedCardsForBattle.length === 5) {
+                confirmBtn.textContent = '✓ Bắt Đầu';
+            } else {
+                confirmBtn.textContent = `✓ ${selectedCardsForBattle.length}/5`;
+            }
+        }
+
+        // Toggle card selection
+        function toggleCardSelection(card) {
+            console.log('🎴 Toggling card:', card.name, 'Current selected:', selectedCardsForBattle.length);
+            const index = selectedCardsForBattle.findIndex(c => c.name === card.name);
+            if (index >= 0) {
+                selectedCardsForBattle.splice(index, 1);
+            } else if (selectedCardsForBattle.length < 5) {
+                selectedCardsForBattle.push({
+                    name: card.name,
+                    atk: card.atk,
+                    hp: card.maxHp,
+                    emoji: card.emoji,
+                    currentHp: card.maxHp,
+                    rarity: card.rarity
+                });
+            } else {
+                return;
+            }
+
+            console.log('📊 After toggle:', selectedCardsForBattle.length, 'cards');
+
+            // Re-render
+            const ownedCards = allCards.filter(card => card.owned);
+            renderCardSelection(ownedCards);
+        }
+
+        // Confirm card selection and start battle
+        function confirmCardSelection() {
+            console.log('🔥 confirmCardSelection called!');
+            console.log('📋 selectedCardsForBattle:', selectedCardsForBattle);
+            
+            if (selectedCardsForBattle.length !== 5) {
+                alert('⚠️ Chọn đủ 5 thẻ!');
+                return;
+            }
+
+            const enemy = createEnemyLevel(currentBattleLevel); // Generate fresh enemy deck for this level
+            if (!enemy) {
+                alert('Màn chơi này chưa có!');
+                return;
+            }
+
+            // Setup battle state
+            battleState.currentLevel = currentBattleLevel;
+            battleState.playerDeck = selectedCardsForBattle.map(card => ({
+                ...card,
+                currentHp: card.hp || card.currentHp
+            }));
+            
+            console.log('✅ Battle state playerDeck set:', battleState.playerDeck);
+            
+            battleState.enemyDeck = enemy.deck.map(card => ({
+                ...card,
+                currentHp: card.hp,
+                inBattle: false
+            }));
+            battleState.round = 1;
+            battleState.phase = 'select';
+            battleState.selectedPlayerCard = null;
+
+            // Switch to battle page
+            document.getElementById('battleLevelNum').textContent = currentBattleLevel;
+            switchPage('battle');
+            
+            // Render after DOM ready
+            setTimeout(() => {
+                console.log('⏱️ Timeout fired, rendering battle screen');
+                renderBattleScreen();
+            }, 100);
+        }
+
+        // Cancel card selection
+        function cancelCardSelection() {
+            selectedCardsForBattle = [];
+            switchPage('main');
+        }
+
+        // Render battle screen
+        function renderBattleScreen() {
+            // Render player deck
+            const deckGrid = document.getElementById('playerDeck');
+            if (!deckGrid) {
+                console.error('❌ playerDeck element not found!');
+                document.body.innerHTML += '<div style="color:red;font-size:20px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:black;padding:20px;z-index:9999;">❌ playerDeck không tìm thấy!</div>';
+                return;
+            }
+            
+            console.log('✅ playerDeck found');
+            deckGrid.innerHTML = '';
+            console.log('📊 battleState.playerDeck:', battleState.playerDeck);
+            console.log('📍 Number of cards:', battleState.playerDeck.length);
+
+            if (!battleState.playerDeck || battleState.playerDeck.length === 0) {
+                console.warn('⚠️ No cards in playerDeck!');
+                deckGrid.innerHTML = '<div style="color: #FFD700; padding: 20px; grid-column: 1/-1; text-align: center;">❌ selectedCardsForBattle rỗng!<br/>' + JSON.stringify(battleState.playerDeck) + '</div>';
+                return;
+            }
+
+            battleState.playerDeck.forEach((card, index) => {
+                console.log(`Creating card ${index}:`, card);
+                const cardEl = document.createElement('div');
+                cardEl.className = 'deck-card';
+                if (battleState.selectedPlayerCard === index) {
+                    cardEl.classList.add('selected');
+                }
+
+                const isAlive = card.currentHp > 0;
+                cardEl.innerHTML = `
+                    <div class="deck-card-emoji">${card.emoji || '❓'}</div>
+                    <div class="deck-card-name">${card.name || 'N/A'}</div>
+                    <div class="deck-card-hp">
+                        <span>${card.currentHp || 0}/${card.hp || 0}</span>
+                        <span>⚔️${card.atk || 0}</span>
+                    </div>
+                    ${!isAlive ? '<div class="deck-card-hp disabled-text">📍 Đã Hạ</div>' : ''}
+                `;
+
+                if (!isAlive) {
+                    cardEl.classList.add('disabled');
+                } else {
+                    cardEl.onclick = () => selectPlayerCard(index);
+                }
+
+                deckGrid.appendChild(cardEl);
+            });
+            
+            console.log('✅ Rendered', deckGrid.children.length, 'cards');
+
+            // Update deck count
+            const playerAlive = battleState.playerDeck.filter(c => c.currentHp > 0).length;
+            const enemyAlive = battleState.enemyDeck.filter(c => c.currentHp > 0).length;
+            
+            document.getElementById('playerDeckCount').textContent = playerAlive;
+            document.getElementById('enemyDeckCount').textContent = enemyAlive;
+
+            // Update turn info
+            const turnText = battleState.phase === 'select' 
+                ? `Round ${battleState.round} - Chọn Thẻ Để Tấn Công` 
+                : `Round ${battleState.round} - Đang Chờ Kết Quả`;
+            document.getElementById('turnText').textContent = turnText;
+
+            // Show/hide buttons - new logic
+            if (battleState.phase === 'select') {
+                // First selection or after choosing new card
+                document.getElementById('confirmBtn').style.display = 'block';
+                document.getElementById('keepBtn').style.display = 'none';
+                document.getElementById('changeBtn').style.display = 'none';
+                
+                // Enable/disable confirm button based on selection
+                const confirmBtn = document.getElementById('confirmBtn');
+                confirmBtn.disabled = battleState.selectedPlayerCard === null;
+                if (battleState.selectedPlayerCard !== null) {
+                    const selectedCard = battleState.playerDeck[battleState.selectedPlayerCard];
+                    confirmBtn.textContent = `⚔️ Tấn Công với ${selectedCard.name}`;
+                } else {
+                    confirmBtn.textContent = '⚔️ Chọn Thẻ Để Tấn Công';
+                }
+            } else if (battleState.phase === 'action') {
+                // After attack, decide to continue or change card
+                document.getElementById('confirmBtn').style.display = 'none';
+                
+                const currentCard = battleState.playerDeck[battleState.selectedPlayerCard];
+                
+                if (currentCard.currentHp <= 0) {
+                    // Current card defeated - allow choosing new card
+                    document.getElementById('changeBtn').style.display = 'block';
+                    document.getElementById('keepBtn').style.display = 'none';
+                    document.getElementById('changeBtn').textContent = '🔄 Chọn Thẻ Mới';
+                } else {
+                    // Current card still alive - allow continuing attack
+                    document.getElementById('keepBtn').style.display = 'block';
+                    document.getElementById('changeBtn').style.display = 'none';
+                    document.getElementById('keepBtn').textContent = '⚡ Tiếp Tục Tấn Công';
+                }
+            }
+        }
+
+        // Select player card
+        function selectPlayerCard(index) {
+            if (battleState.playerDeck[index].currentHp <= 0) return;
+            battleState.selectedPlayerCard = index;
+            
+            // Immediately display the selected card
+            const selectedCard = battleState.playerDeck[index];
+            document.getElementById('playerCardEmoji').textContent = selectedCard.emoji;
+            document.getElementById('playerCardName').textContent = selectedCard.name;
+            document.getElementById('playerCardAtk').textContent = selectedCard.atk;
+            document.getElementById('playerCardHp').textContent = selectedCard.currentHp;
+            document.getElementById('playerMaxHP').textContent = selectedCard.maxHp;
+            updateHealthBar('playerHealthBar', selectedCard.currentHp, selectedCard.maxHp);
+            
+            renderBattleScreen();
+        }
+
+        // Attack button - execute battle
+        function confirmBattleAction() {
+            if (battleState.selectedPlayerCard === null) {
+                alert('⚠️ Chọn một thẻ trước!');
+                return;
+            }
+
+            // Enemy random select
+            const aliveEnemy = battleState.enemyDeck.filter((c, i) => c.currentHp > 0);
+            if (aliveEnemy.length === 0) {
+                endBattle('victory');
+                return;
+            }
+
+            const enemyIndex = battleState.enemyDeck.findIndex(c => c.currentHp > 0);
+            battleState.selectedEnemyCard = enemyIndex;
+
+            battleState.phase = 'waiting';
+            renderBattleScreen();
+
+            // Simulate delay for attack animation
+            setTimeout(() => {
+                executeBattleRound();
+            }, 500);
+        }
+
+        // Execute battle round
+        function executeBattleRound() {
+            const playerCard = battleState.playerDeck[battleState.selectedPlayerCard];
+            const enemyCard = battleState.enemyDeck[battleState.selectedEnemyCard];
+
+            if (!playerCard || !enemyCard || playerCard.currentHp <= 0 || enemyCard.currentHp <= 0) {
+                endBattle(playerCard.currentHp > 0 ? 'victory' : 'defeat');
+                return;
+            }
+
+            // Calculate damage
+            const playerDamage = Math.max(1, playerCard.atk - Math.floor(Math.random() * 5));
+            const enemyDamage = Math.max(1, enemyCard.atk - Math.floor(Math.random() * 5));
+
+            // Apply damage
+            enemyCard.currentHp = Math.max(0, enemyCard.currentHp - playerDamage);
+            playerCard.currentHp = Math.max(0, playerCard.currentHp - enemyDamage);
+
+            // Update UI
+            updateBattleField(playerDamage, enemyDamage);
+
+            // Check if someone is defeated
+            const aliveEnemy = battleState.enemyDeck.filter(c => c.currentHp > 0).length;
+            const alivePlayer = battleState.playerDeck.filter(c => c.currentHp > 0).length;
+
+            if (aliveEnemy === 0) {
+                setTimeout(() => endBattle('victory'), 1500);
+                return;
+            }
+
+            if (alivePlayer === 0) {
+                setTimeout(() => endBattle('defeat'), 1500);
+                return;
+            }
+
+            // Check if enemy card is defeated and auto-select next
+            if (enemyCard.currentHp <= 0) {
+                const nextAliveEnemy = battleState.enemyDeck.findIndex(c => c.currentHp > 0);
+                if (nextAliveEnemy >= 0) {
+                    battleState.selectedEnemyCard = nextAliveEnemy;
+                    // Auto-display next enemy card
+                    const nextEnemyCard = battleState.enemyDeck[nextAliveEnemy];
+                    setTimeout(() => {
+                        document.getElementById('enemyCardEmoji').textContent = nextEnemyCard.emoji;
+                        document.getElementById('enemyCardName').textContent = nextEnemyCard.name;
+                        document.getElementById('enemyCardAtk').textContent = nextEnemyCard.atk;
+                        document.getElementById('enemyCardHp').textContent = nextEnemyCard.currentHp;
+                        document.getElementById('enemyMaxHP').textContent = nextEnemyCard.maxHp;
+                        updateHealthBar('enemyHealthBar', nextEnemyCard.currentHp, nextEnemyCard.maxHp);
+                    }, 1500);
+                }
+            }
+            
+            // Next round
+            battleState.round++;
+            
+            // Check if current player card is still alive
+            const currentCard = battleState.playerDeck[battleState.selectedPlayerCard];
+            if (currentCard.currentHp <= 0) {
+                // Card defeated - allow player to select new card
+                battleState.phase = 'action';
+                battleState.selectedPlayerCard = null;
+            } else {
+                // Card still alive - show "Continue Attack" option
+                battleState.phase = 'action';
+                // Keep selectedPlayerCard so same card is ready to attack
+            }
+            
+            setTimeout(() => {
+                renderBattleScreen();
+            }, 1500);
+        }
+
+        // Update battle field display
+        function updateBattleField(playerDamage, enemyDamage) {
+            const playerCard = battleState.playerDeck[battleState.selectedPlayerCard];
+            const enemyCard = battleState.enemyDeck[battleState.selectedEnemyCard];
+
+            // Update player field
+            document.getElementById('playerCardEmoji').textContent = playerCard.emoji;
+            document.getElementById('playerCardName').textContent = playerCard.name;
+            document.getElementById('playerCardAtk').textContent = playerCard.atk;
+            document.getElementById('playerCardHp').textContent = playerCard.currentHp;
+            document.getElementById('playerHP').textContent = playerCard.currentHp;
+            document.getElementById('playerMaxHP').textContent = playerCard.hp;
+            updateHealthBar('playerHealthBar', playerCard.currentHp, playerCard.hp);
+
+            // Update enemy field
+            document.getElementById('enemyCardEmoji').textContent = enemyCard.emoji;
+            document.getElementById('enemyCardName').textContent = enemyCard.name;
+            document.getElementById('enemyCardAtk').textContent = enemyCard.atk;
+            document.getElementById('enemyCardHp').textContent = enemyCard.currentHp;
+            document.getElementById('enemyHP').textContent = enemyCard.currentHp;
+            document.getElementById('enemyMaxHP').textContent = enemyCard.hp;
+            updateHealthBar('enemyHealthBar', enemyCard.currentHp, enemyCard.hp);
+
+            // Show damage numbers
+            showDamageNumber('playerCardSlot', enemyDamage, true);
+            showDamageNumber('enemyCardSlot', playerDamage, false);
+        }
+
+        // Update health bar
+        function updateHealthBar(barId, current, max) {
+            const bar = document.getElementById(barId);
+            const percent = (current / max) * 100;
+            bar.style.width = percent + '%';
+        }
+
+        // Show damage number
+        function showDamageNumber(slotId, damage, isEnemy) {
+            const slot = document.getElementById(slotId);
+            const damageEl = document.createElement('div');
+            damageEl.className = 'damage-number';
+            damageEl.textContent = '-' + damage;
+            damageEl.style.left = (Math.random() * 60 + 20) + '%';
+            damageEl.style.top = (Math.random() * 40 + 20) + '%';
+            damageEl.style.color = damage > 10 ? '#FFD700' : '#FF6B6B';
+            damageEl.style.fontSize = damage > 10 ? '32px' : '24px';
+            damageEl.style.fontWeight = 'bold';
+            damageEl.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(255,107,107,0.8)';
+            slot.appendChild(damageEl);
+
+            setTimeout(() => damageEl.remove(), 1200);
+        }
+
+        // Keep card or change
+        function keepBattleCard() {
+            // Continue attacking with current card
+            const currentCard = battleState.playerDeck[battleState.selectedPlayerCard];
+            battleState.phase = 'select';
+            // Auto-select the same card for next attack
+            battleState.selectedPlayerCard = battleState.selectedPlayerCard;
+            renderBattleScreen();
+        }
+
+        function changeBattleCard() {
+            // Only allowed when current card is defeated
+            const currentCard = battleState.playerDeck[battleState.selectedPlayerCard];
+            if (currentCard.currentHp > 0) {
+                alert('❌ Chỉ có thể đổi thẻ khi thẻ hiện tại đã bị đánh bại!');
+                return;
+            }
+            // Allow selecting new card
+            battleState.phase = 'select';
+            battleState.selectedPlayerCard = null;
+            renderBattleScreen();
+        }
+
+        // End battle
+        function endBattle(result) {
+            const overlay = document.createElement('div');
+            overlay.className = 'battle-result-overlay';
+
+            const isVictory = result === 'victory';
+            const title = isVictory ? '🎉 Chiến Thắng!' : '💀 Chiến Thua!';
+            const text = isVictory 
+                ? 'Bạn đã vượt qua màn này!' 
+                : 'Bạn đã bị đánh bại!';
+
+            let starsHtml = '';
+            let goldReward = 0;
+            
+            if (isVictory) {
+                // Calculate remaining player HP
+                const remainingHp = battleState.playerDeck.reduce((sum, card) => sum + Math.max(0, card.currentHp), 0);
+                const stars = levelSystem.calculateStars(battleState.currentLevel, remainingHp);
+                goldReward = levelSystem.getGoldReward(stars);
+                
+                // Star display
+                starsHtml = `
+                    <div class="star-display">
+                        <div class="stars">
+                            ${[1, 2, 3].map(i => `
+                                <span class="star ${i <= stars ? 'earned' : ''}" style="font-size: 28px;">⭐</span>
+                            `).join('')}
+                        </div>
+                        <div class="star-text">${stars} Sao - +${goldReward} Vàng</div>
+                    </div>
+                `;
+            }
+
+            overlay.innerHTML = `
+                <div class="battle-result-box">
+                    <div class="result-title ${isVictory ? 'result-victory' : 'result-defeat'}">
+                        ${title}
+                    </div>
+                    <div class="result-text">${text}</div>
+                    ${starsHtml}
+                    <button class="result-button" onclick="exitBattle()">🔙 Quay Lại</button>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            if (isVictory) {
+                // Update progress with completed level
+                const saved = localStorage.getItem('gameProgress');
+                let gameState = { playerMoney: 5000, cards: [], completedLevels: [], levelStars: {} };
+                
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        gameState.playerMoney = parsed.playerMoney || 5000;
+                        gameState.cards = parsed.cards || [];
+                        gameState.completedLevels = parsed.completedLevels || [];
+                        gameState.levelStars = parsed.levelStars || {};
+                    } catch (e) {}
+                }
+
+                const remainingHp = battleState.playerDeck.reduce((sum, card) => sum + Math.max(0, card.currentHp), 0);
+                const stars = levelSystem.calculateStars(battleState.currentLevel, remainingHp);
+                const goldReward = levelSystem.getGoldReward(stars);
+
+                if (!gameState.completedLevels.includes(battleState.currentLevel)) {
+                    gameState.completedLevels.push(battleState.currentLevel);
+                }
+                
+                // Store level stars (keep best)
+                if (!gameState.levelStars) gameState.levelStars = {};
+                gameState.levelStars[battleState.currentLevel] = Math.max(
+                    gameState.levelStars[battleState.currentLevel] || 0,
+                    stars
+                );
+
+                gameState.playerMoney = playerMoney + goldReward;
+                gameState.cards = allCards.map(card => ({
+                    name: card.name,
+                    owned: card.owned
+                }));
+
+                localStorage.setItem('gameProgress', JSON.stringify(gameState));
+                console.log('💾 Saved to localStorage - Level:', battleState.currentLevel, 'Completed levels:', gameState.completedLevels);
+                
+                playerMoney += goldReward;
+                updateMoney();
+                generateLevels(); // Regenerate levels to show changes
+            }
+        }
+
+        // Exit battle
+        function exitBattle() {
+            const overlay = document.querySelector('.battle-result-overlay');
+            if (overlay) overlay.remove();
+            console.log('🔄 Reloading page to reset state...');
+            // Reload page to reset all state properly
+            location.reload();
+        }
+
+        // Biến gacha
+        let currentChest = 'normal';
+        let playerMoney = 5000;
+
+        const chestConfigs = {
+            normal: {
+                name: 'Rương Thường',
+                price: 100,
+                rates: [
+                    { rarity: 'common', percent: 0.80 },
+                    { rarity: 'rare', percent: 0.20 }
+                ]
+            },
+            rare: {
+                name: 'Rương Hiếm',
+                price: 500,
+                rates: [
+                    { rarity: 'common', percent: 0.40 },
+                    { rarity: 'rare', percent: 0.30 },
+                    { rarity: 'super-rare', percent: 0.20 },
+                    { rarity: 'ultra-rare', percent: 0.10 }
+                ]
+            },
+            legend: {
+                name: 'Rương Truyền Thuyết',
+                price: 1000,
+                rates: [
+                    { rarity: 'super-rare', percent: 0.60 },
+                    { rarity: 'ultra-rare', percent: 0.30 },
+                    { rarity: 'legendary', percent: 0.10 }
+                ]
+            }
+        };
+
+        const refundTable = {
+            common: 5,
+            rare: 10,
+            'super-rare': 100,
+            'ultra-rare': 300,
+            legendary: 500
+        };
+
+        // Chọn loại rương
+        function selectChest(type) {
+            currentChest = type;
+            document.querySelectorAll('.gacha-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.closest('.gacha-tab').classList.add('active');
+            updateChestInfo();
+        }
+
+        // Cập nhật hiển thị thông tin rương
+        function updateChestInfo() {
+            const config = chestConfigs[currentChest];
+            const info = document.getElementById('selectedChestInfo');
+            
+            let ratesHtml = '';
+            config.rates.forEach(rate => {
+                const rarityClass = rate.rarity;
+                const percentStr = (rate.percent * 100).toFixed(0) + '%';
+                const rarityName = {
+                    'common': 'Trắng (Common)',
+                    'rare': 'Xanh Lá (Rare)',
+                    'super-rare': 'Xanh Lam (Super Rare)',
+                    'ultra-rare': 'Tím (Ultra Rare)',
+                    'legendary': 'Cam (Legendary)'
+                }[rate.rarity];
+                
+                ratesHtml += `
+                    <div class="rate-row">
+                        <span class="rarity-badge ${rarityClass}">${rarityName}</span>
+                        <span class="rate-percent">${percentStr}</span>
+                    </div>
+                `;
+            });
+
+            info.innerHTML = `
+                <h3>🎴 ${config.name}</h3>
+                <div class="rates-table">
+                    ${ratesHtml}
+                </div>
+                <div class="gacha-buttons">
+                    <button class="gacha-btn-pull" onclick="pullChest(1)">📦 Mở x1 (${config.price} vàng)</button>
+                    <button class="gacha-btn-pull" onclick="pullChest(10)">📦 Mở x10 (${config.price * 10} vàng)</button>
+                </div>
+            `;
+        }
+
+        // Random thẻ từ rương
+        function getRandomCard(rarity) {
+            const validCards = allCards.filter(card => card.rarity === rarity);
+            if (validCards.length === 0) return null;
+            return validCards[Math.floor(Math.random() * validCards.length)];
+        }
+
+        // Lấy độ hiếm dựa trên tỉ lệ
+        function getRarityByRate(config) {
+            const random = Math.random();
+            let cumulative = 0;
+            
+            for (let rate of config.rates) {
+                cumulative += rate.percent;
+                if (random <= cumulative) {
+                    return rate.rarity;
+                }
+            }
+            
+            return config.rates[config.rates.length - 1].rarity;
+        }
+
+        // Mở rương
+        function pullChest(count) {
+            const config = chestConfigs[currentChest];
+            const totalCost = config.price * count;
+
+            if (playerMoney < totalCost) {
+                alert(`❌ Vàng không đủ! Cần ${totalCost} vàng, bạn có ${playerMoney} vàng`);
+                return;
+            }
+
+            playerMoney -= totalCost;
+            const pulledCards = [];
+
+            // Random và lấy thẻ
+            for (let i = 0; i < count; i++) {
+                const rarity = getRarityByRate(config);
+                const card = getRandomCard(rarity);
+                if (card) {
+                    pulledCards.push(card);
+                }
+            }
+
+            // Hiển thị kết quả
+            showPullResult(pulledCards);
+            updateMoney();
+        }
+
+        // Hiển thị kết quả pull
+        function showPullResult(cards) {
+            const uniqueCards = [];
+            let totalRefund = 0;
+
+            cards.forEach(card => {
+                if (card.owned) {
+                    // Thẻ đã có → hoàn tiền
+                    totalRefund += refundTable[card.rarity];
+                } else {
+                    // Thẻ chưa có → thêm vào bộ sưu tập
+                    card.owned = true;
+                    uniqueCards.push(card);
+                }
+            });
+
+            if (totalRefund > 0) {
+                playerMoney += totalRefund;
+            }
+
+            // Hiển thị modal popup
+            showGachaModal(uniqueCards, totalRefund);
+            renderCards();
+            updateMoney();
+            saveProgress();
+        }
+
+        // Cập nhật tiền hiển thị
+        function updateMoney() {
+            document.getElementById('money').textContent = playerMoney;
+            const shopMoney = document.getElementById('shopMoney');
+            if (shopMoney) {
+                shopMoney.textContent = playerMoney;
+            }
+        }
+
+        function initShopButtons() {
+            // Khởi tạo gacha khi vào shop
+            updateChestInfo();
+        }
+
+        // Khởi tạo khi trang load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgress();
+            generateLevels();
+            initToggleSwitches();
+            initShopButtons();
+            renderCards();
+            
+            // Phát nhạc nền
+            backgroundMusic.play().catch(err => {
+                console.log('Autoplay blocked, chờ user interaction...');
+                // Nếu autoplay bị chặn, phát khi user click
+                document.addEventListener('click', function playOnClick() {
+                    backgroundMusic.play().catch(e => console.log('Error:', e));
+                    document.removeEventListener('click', playOnClick);
+                }, { once: true });
+            });
+        });
+    </script>
+</body>
+</html>
