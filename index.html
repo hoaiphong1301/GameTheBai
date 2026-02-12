@@ -233,21 +233,21 @@
         <div class="game-header">
             <div class="game-title">🎴 Card Quest</div>
             <div class="player-stats">
-                <div class="stat-item">
+                <div class="stat-item" onclick="showPowerPopup()">
                     <div class="stat-icon">💰</div>
                     <div>
                         <div class="stat-label">TIỀN</div>
                         <div class="stat-value" id="money">5000</div>
                     </div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" onclick="showDiamondPopup()">
                     <div class="stat-icon">💎</div>
                     <div>
                         <div class="stat-label">KIM CƯƠNG</div>
-                        <div class="stat-value" id="diamond">250</div>
+                        <div class="stat-value" id="diamond">0</div>
                     </div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" onclick="showPowerPopup()">
                     <div class="stat-icon">⚡</div>
                     <div>
                         <div class="stat-label">LỰC CHIẾN</div>
@@ -271,7 +271,7 @@
             <div class="page collection-page" data-page="collection">
                 <h2>🎴 Bộ Sưu Tập Thẻ Bài</h2>
                 <div class="collection-stats">
-                    <div>📊 Thẻ sở hữu: <strong id="ownedCount">8</strong>/54 | Tổng lực chiến: <strong>4250</strong></div>
+                    <div>📊 Thẻ sở hữu: <strong id="ownedCount">8</strong>/54 | Tổng lực chiến: <strong id="powerTotalDisplay">8</strong></div>
                 </div>
 
                 <!-- Nút chuyển đổi Sở hữu / Chưa sở hữu -->
@@ -333,6 +333,10 @@
                         🎴 Rương Truyền Thuyết
                         <div class="gacha-rate">1000 vàng</div>
                     </button>
+                    <button class="gacha-tab" onclick="selectChest('talent')">
+                        🎭 Rương Trác Việc
+                        <div class="gacha-rate">100 kim cương</div>
+                    </button>
                 </div>
 
                 <!-- Hiển thị rương được chọn -->
@@ -377,18 +381,6 @@
                         </div>
                     </div>
                     <div class="setting-desc">Bật/Tắt âm thanh hiệu ứng</div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label">
-                        <span>🎮 Độ Khó</span>
-                    </div>
-                    <select>
-                        <option>Dễ</option>
-                        <option selected>Bình thường</option>
-                        <option>Khó</option>
-                    </select>
-                    <div class="setting-desc">Chọn độ khó chơi game</div>
                 </div>
 
                 <div class="setting-item">
@@ -466,6 +458,14 @@
                 <button class="exit-battle-btn" onclick="exitBattle()">🔙</button>
             </div>
 
+            <!-- Type Advantage Button (Top Toolbar) -->
+            <div class="battle-toolbar">
+                <button class="type-advantage-btn" onclick="showTypeAdvantagePopup()" title="Xem thông tin khắc hệ">
+                    <span class="type-advantage-icon">🔄</span>
+                    <span class="type-advantage-label">Khắc Hệ</span>
+                </button>
+            </div>
+
             <div class="battle-main">
                 <!-- Player Deck (at top for easy access) -->
                 <div class="player-deck">
@@ -495,6 +495,7 @@
                         <div class="battle-field enemy-field">
                             <div class="card-slot active" id="enemyCardSlot">
                                 <div class="card-placeholder">
+                                    <div class="habitat-badge" id="enemyHabitatBadge">🌤️</div>
                                     <div style="font-size: 40px; margin-bottom: 5px;" id="enemyCardEmoji">🐱</div>
                                     <div class="card-name" id="enemyCardName">Mèo Rừng</div>
                                     <div class="card-stats">
@@ -522,6 +523,7 @@
                         <div class="battle-field player-field">
                             <div class="card-slot active" id="playerCardSlot">
                                 <div class="card-placeholder">
+                                    <div class="habitat-badge" id="playerHabitatBadge">🌤️</div>
                                     <div style="font-size: 40px; margin-bottom: 5px;" id="playerCardEmoji">🐕</div>
                                     <div class="card-name" id="playerCardName">Chó</div>
                                     <div class="card-stats">
@@ -564,6 +566,168 @@
             <div class="nav-item" onclick="switchPage('settings')">
                 <div class="nav-icon">⚙️</div>
                 <div class="nav-label">Cài Đặt</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Power Info Popup -->
+    <div id="power-popup" class="info-popup" onclick="closePowerPopup()">
+        <div class="info-popup-content" onclick="event.stopPropagation()">
+            <div class="info-popup-header">
+                <h3>⚡ Thông Tin Lực Chiến</h3>
+                <button class="close-btn" onclick="closePowerPopup()">✕</button>
+            </div>
+            <div class="info-popup-body">
+                <div class="power-info-section">
+                    <h4>Tổng Lực Chiến</h4>
+                    <div class="power-total" id="powerTotalDisplay">0</div>
+                </div>
+                
+                <div class="power-info-section">
+                    <h4>Chi Tiết từng Rarity</h4>
+                    <div class="power-details" id="powerDetailsDisplay"></div>
+                </div>
+                
+                <div class="power-info-section">
+                    <h4>Mốc Lực Chiến & Bonus HP</h4>
+                    <div class="power-milestones">
+                        <div class="milestone">
+                            <span class="milestone-power">1,000 ⚡</span>
+                            <span class="milestone-bonus">+30 HP</span>
+                        </div>
+                        <div class="milestone">
+                            <span class="milestone-power">5,000 ⚡</span>
+                            <span class="milestone-bonus">+100 HP</span>
+                        </div>
+                        <div class="milestone">
+                            <span class="milestone-power">10,000 ⚡</span>
+                            <span class="milestone-bonus">+200 HP</span>
+                        </div>
+                        <div class="milestone">
+                            <span class="milestone-power">15,000 ⚡</span>
+                            <span class="milestone-bonus">+350 HP</span>
+                        </div>
+                    </div>
+                    <p class="milestone-note">💡 Bonus HP áp dụng cho tất cả thẻ của bạn khi chiến đấu!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diamond Info Popup -->
+    <div id="diamond-popup" class="info-popup" onclick="closeDiamondPopup()">
+        <div class="info-popup-content" onclick="event.stopPropagation()">
+            <div class="info-popup-header">
+                <h3>💎 Thông Tin Kim Cương</h3>
+                <button class="close-btn" onclick="closeDiamondPopup()">✕</button>
+            </div>
+            <div class="info-popup-body">
+                <div class="diamond-info-section">
+                    <h4>Kim Cương Hiện Tại</h4>
+                    <div class="diamond-total" id="diamondTotalDisplay">0</div>
+                </div>
+                
+                <div class="diamond-info-section">
+                    <h4>Cách Kiếm Kim Cương</h4>
+                    <div class="diamond-sources">
+                        <div class="source-item">
+                            <span class="source-level">Màn 10</span>
+                            <span class="source-reward">+50 💎</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="source-level">Màn 20</span>
+                            <span class="source-reward">+100 💎</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="source-level">Màn 30</span>
+                            <span class="source-reward">+150 💎</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="source-level">Màn 40</span>
+                            <span class="source-reward">+200 💎</span>
+                        </div>
+                        <div class="source-item">
+                            <span class="source-level">Màn 50</span>
+                            <span class="source-reward">+300 💎</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="diamond-info-section">
+                    <h4>Mua Rương của Kim Cương</h4>
+                    <div class="diamond-shop">
+                        <div class="shop-item">
+                            <span class="shop-name">🎭 Rương Trác Việc</span>
+                            <span class="shop-price">100 💎</span>
+                            <span class="shop-rate">50% Tím + 50% Cam</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Type Advantage Info Popup -->
+    <div id="type-advantage-popup" class="info-popup" onclick="closeTypeAdvantagePopup()">
+        <div class="info-popup-content" onclick="event.stopPropagation()">
+            <div class="info-popup-header">
+                <h3>🔄 Hệ Thống Khắc Hệ</h3>
+                <button class="close-btn" onclick="closeTypeAdvantagePopup()">✕</button>
+            </div>
+            <div class="info-popup-body">
+                <div class="type-advantage-section">
+                    <h4>Vòng Tròn Khắc Hệ</h4>
+                    <div class="type-circle">
+                        <div class="type-item land">
+                            <span class="type-emoji">🏜️</span>
+                            <span class="type-name">Land<br>(Đất)</span>
+                        </div>
+                        <div class="type-arrow">→</div>
+                        <div class="type-item sky">
+                            <span class="type-emoji">🌤️</span>
+                            <span class="type-name">Sky<br>(Trời)</span>
+                        </div>
+                        <div class="type-arrow">→</div>
+                        <div class="type-item water">
+                            <span class="type-emoji">🌊</span>
+                            <span class="type-name">Water<br>(Nước)</span>
+                        </div>
+                        <div class="type-arrow">→</div>
+                    </div>
+                </div>
+                
+                <div class="type-advantage-section">
+                    <h4>Quy Tắc Khắc Hệ</h4>
+                    <div class="advantage-rules">
+                        <div class="rule-item">
+                            <span class="rule-from">🏜️ Land</span>
+                            <span class="rule-text">khắc</span>
+                            <span class="rule-to">🌤️ Sky</span>
+                            <span class="rule-boost">+20% 💥</span>
+                        </div>
+                        <div class="rule-item">
+                            <span class="rule-from">🌤️ Sky</span>
+                            <span class="rule-text">khắc</span>
+                            <span class="rule-to">🌊 Water</span>
+                            <span class="rule-boost">+20% 💥</span>
+                        </div>
+                        <div class="rule-item">
+                            <span class="rule-from">🌊 Water</span>
+                            <span class="rule-text">khắc</span>
+                            <span class="rule-to">🏜️ Land</span>
+                            <span class="rule-boost">+20% 💥</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="type-advantage-section">
+                    <h4>💡 Mẹo</h4>
+                    <div class="advantage-tips">
+                        <p>✓ Khi thẻ của bạn khắc thẻ đối thủ, sát thương tăng 20%</p>
+                        <p>✓ Hãy chọn thẻ phù hợp với hệ của đối thủ để chiến thắng dễ dàng hơn</p>
+                        <p>✓ Xem badge nhỏ ở góc trên cùng bên phải của thẻ để biết hệ của nó</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -651,29 +815,38 @@
                 console.log('Không thể auto play nhạc:', err);
             });
         });
+
+        // ==================== HIT SOUND ====================
+        // Tạo audio element cho âm thanh khi đánh trúng
+        const hitSound = new Audio('nhac/hit.mp3');
+        hitSound.volume = 0.5;
+        
+        // Global state cho SFX
+        let sfxEnabled = true;
         
         // Dữ liệu tất cả 54 thẻ bài
         const allCards = [
-            // Common (Trắng) - 15 loài
-            { name: 'Mèo Rừng', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 12, hp: 18, owned: true, emoji: '🐱' },
-            { name: 'Chó', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 10, hp: 20, owned: true, emoji: '🐕' },
-            { name: 'Sư Tử Biển', type: 'carnivore', habitat: 'water', rarity: 'common', atk: 10, hp: 20, owned: true, emoji: '🦭' },
-            { name: 'Gấu Trúc', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 6, hp: 24, owned: true, emoji: '🐼' },
-            { name: 'Rái Cá', type: 'herbivore', habitat: 'water', rarity: 'common', atk: 15, hp: 15, owned: true, emoji: '🦦' },
-            { name: 'Hươu', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 5, hp: 25, owned: true, emoji: '🦌' },
-            { name: 'Cá chép', type: 'omnivore', habitat: 'water', rarity: 'common', atk: 2, hp: 28, owned: true, emoji: '🐠' },
-            { name: 'Chuột', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 10, hp: 20, owned: true, emoji: '🐭' },
-            { name: 'Chim Bồ Câu', type: 'omnivore', habitat: 'sky', rarity: 'common', atk: 10, hp: 20, owned: true, emoji: '🕊️' },
-            { name: 'Qụa', type: 'omnivore', habitat: 'sky', rarity: 'common', atk: 18, hp: 12, owned: false, emoji: '🐓' },
+            // Common (Trắng) - 16 loài
+            { name: 'Mèo Rừng', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 12, hp: 18, owned: false, emoji: '🐈‍⬛' },
+            { name: 'Chó', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 10, hp: 20, owned: false, emoji: '🐕' },
+            { name: 'Sư Tử Biển', type: 'carnivore', habitat: 'water', rarity: 'common', atk: 10, hp: 20, owned: false, emoji: '🦭' },
+            { name: 'Gấu Trúc', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 6, hp: 24, owned: false, emoji: '🐼' },
+            { name: 'Rái Cá', type: 'herbivore', habitat: 'water', rarity: 'common', atk: 15, hp: 15, owned: false, emoji: '🦦' },
+            { name: 'Hươu', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 5, hp: 25, owned: false, emoji: '🦌' },
+            { name: 'Cá chép', type: 'omnivore', habitat: 'water', rarity: 'common', atk: 2, hp: 28, owned: false, emoji: '🐠' },
+            { name: 'Chuột', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 10, hp: 20, owned: false, emoji: '🐭' },
+            { name: 'Chim Bồ Câu', type: 'omnivore', habitat: 'sky', rarity: 'common', atk: 10, hp: 20, owned: false, emoji: '🕊️' },
+            { name: 'Qụa', type: 'omnivore', habitat: 'sky', rarity: 'common', atk: 18, hp: 12, owned: false, emoji: '🐦‍⬛' },
             { name: 'Mèo', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 11, hp: 19, owned: false, emoji: '🐈' },
             { name: 'Thỏ', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 7, hp: 23, owned: false, emoji: '🐰' },
             { name: 'Thiên Nga', type: 'omnivore', habitat: 'water', rarity: 'common', atk: 1, hp: 29, owned: false, emoji: '🦢' },
             { name: 'Gà', type: 'omnivore', habitat: 'land', rarity: 'common', atk: 15, hp: 15, owned: false, emoji: '🐓' },
             { name: 'Nai', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 5, hp: 25, owned: false, emoji: '🦌' },
+            { name: 'Cừu', type: 'herbivore', habitat: 'land', rarity: 'common', atk: 5, hp: 25, owned: false, emoji: '🐑' },
             
-            // Rare (Xanh Lá) - 15 loài
-            { name: 'Cá Kiếm', type: 'carnivore', habitat: 'water', rarity: 'rare', atk: 20, hp: 30, owned: true, emoji: '🐟' },
-            { name: 'Cá Heo', type: 'omnivore', habitat: 'water', rarity: 'rare', atk: 15, hp: 35, owned: true, emoji: '🐬' },
+            // Rare (Xanh Lá) - 16 loài
+            { name: 'Cá Kiếm', type: 'carnivore', habitat: 'water', rarity: 'rare', atk: 20, hp: 30, owned: false, emoji: '🐟' },
+            { name: 'Cá Heo', type: 'omnivore', habitat: 'water', rarity: 'rare', atk: 15, hp: 35, owned: false, emoji: '🐬' },
             { name: 'Chim Ưng', type: 'carnivore', habitat: 'sky', rarity: 'rare', atk: 30, hp: 20, owned: false, emoji: '🦅' },
             { name: 'Báo Đốm', type: 'carnivore', habitat: 'land', rarity: 'rare', atk: 20, hp: 30, owned: false, emoji: '🐆' },
             { name: 'Chim công', type: 'carnivore', habitat: 'land', rarity: 'rare', atk: 10, hp: 40, owned: false, emoji: '🦚' },
@@ -687,8 +860,9 @@
             { name: 'Cá Đèn Lồng', type: 'carnivore', habitat: 'water', rarity: 'rare', atk: 10, hp: 40, owned: false, emoji: '🐙' },
             { name: 'Sói', type: 'herbivore', habitat: 'land', rarity: 'rare', atk: 20, hp: 30, owned: false, emoji: '🐺' },
             { name: 'Kền Kền', type: 'carnivore', habitat: 'sky', rarity: 'rare', atk: 15, hp: 35, owned: false, emoji: '🦅' },
+            { name: 'Trâu Nước', type: 'omnivore', habitat: 'land', rarity: 'rare', atk: 15, hp: 35, owned: false, emoji: '🐃' },
             
-            // Super Rare (Xanh Dương) - 10 loài
+            // Super Rare (Xanh Dương) - 11 loài
             { name: 'Đại Bàng', type: 'carnivore', habitat: 'sky', rarity: 'super-rare', atk: 60, hp: 40, owned: false, emoji: '🦅' },
             { name: 'Sư Tử', type: 'carnivore', habitat: 'land', rarity: 'super-rare', atk: 50, hp: 50, owned: false, emoji: '🦁' },
             { name: 'Cá Voi Sát Thủ', type: 'carnivore', habitat: 'water', rarity: 'super-rare', atk: 40, hp: 60, owned: false, emoji: '🐋' },
@@ -699,23 +873,24 @@
             { name: 'Cá Sấu', type: 'carnivore', habitat: 'water', rarity: 'super-rare', atk: 40, hp: 60, owned: false, emoji: '🐊' },
             { name: 'Rắn Hổ Mang', type: 'omnivore', habitat: 'land', rarity: 'super-rare', atk: 70, hp: 30, owned: false, emoji: '🐍' },
             { name: 'Hà mã', type: 'omnivore', habitat: 'water', rarity: 'super-rare', atk: 42, hp: 58, owned: false, emoji: '🦛' },
+            { name: 'Gấu Trắng', type: 'carnivore', habitat: 'land', rarity: 'super-rare', atk: 45, hp: 55, owned: false, emoji: '🐻‍❄️' },
             
             // Ultra Rare (Tím) - 8 loài
-            { name: 'T-Rex', type: 'carnivore', habitat: 'sky', rarity: 'ultra-rare', atk: 200, hp: 200, owned: false, emoji: '🦖' },
-            { name: 'Mosasaurus', type: 'omnivore', habitat: 'land', rarity: 'ultra-rare', atk: 190, hp: 210, owned: false, emoji: '🦈' },
-            { name: 'Pteranodon', type: 'carnivore', habitat: 'land', rarity: 'ultra-rare', atk: 300, hp: 100, owned: false, emoji: '🦅' },
-            { name: 'Titannoboa', type: 'carnivore', habitat: 'water', rarity: 'ultra-rare', atk: 100, hp: 300, owned: false, emoji: '🐍' },
-            { name: 'Megalodon', type: 'carnivore', habitat: 'sky', rarity: 'ultra-rare', atk: 250, hp: 150, owned: false, emoji: '🦈' },
-            { name: 'Cá Voi Xanh', type: 'carnivore', habitat: 'land', rarity: 'ultra-rare', atk: 100, hp: 300, owned: false, emoji: '🐳' },
-            { name: 'Spinosaurus', type: 'carnivore', habitat: 'water', rarity: 'ultra-rare', atk: 210, hp: 190, owned: false, emoji: '🦖' },
-            { name: 'Voi ma mút', type: 'carnivore', habitat: 'sky', rarity: 'ultra-rare', atk: 80, hp: 320, owned: false, emoji: '🦣' },
+            { name: 'T-Rex', type: 'carnivore', habitat: 'land', rarity: 'ultra-rare', atk: 200, hp: 200, owned: false, emoji: '🦖' },
+            { name: 'Mosasaurus', type: 'omnivore', habitat: 'water', rarity: 'ultra-rare', atk: 190, hp: 210, owned: false, emoji: '🦈' },
+            { name: 'Pteranodon', type: 'carnivore', habitat: 'sky', rarity: 'ultra-rare', atk: 300, hp: 100, owned: false, emoji: '🦅' },
+            { name: 'Titannoboa', type: 'carnivore', habitat: 'land', rarity: 'ultra-rare', atk: 100, hp: 300, owned: false, emoji: '🐍' },
+            { name: 'Megalodon', type: 'carnivore', habitat: 'water', rarity: 'ultra-rare', atk: 250, hp: 150, owned: false, emoji: '🦈' },
+            { name: 'Cá Voi Xanh', type: 'carnivore', habitat: 'water', rarity: 'ultra-rare', atk: 100, hp: 300, owned: false, emoji: '🐳' },
+            { name: 'Spinosaurus', type: 'carnivore', habitat: 'land', rarity: 'ultra-rare', atk: 210, hp: 190, owned: false, emoji: '🦖' },
+            { name: 'Voi ma mút', type: 'carnivore', habitat: 'land', rarity: 'ultra-rare', atk: 80, hp: 320, owned: false, emoji: '🦣' },
             
             // Legendary (Cam) - 6 loài
-            { name: 'Phoenix', type: 'carnivore', habitat: 'sky', rarity: 'legendary', atk: 400, hp: 600, owned: true, emoji: '🔥' },
+            { name: 'Phoenix', type: 'carnivore', habitat: 'sky', rarity: 'legendary', atk: 400, hp: 600, owned: false, emoji: '🐦‍🔥' },
             { name: 'Rồng', type: 'carnivore', habitat: 'sky', rarity: 'legendary', atk: 500, hp: 500, owned: false, emoji: '🐉' },
-            { name: 'Kraken', type: 'carnivore', habitat: 'water', rarity: 'legendary', atk: 350, hp: 650, owned: false, emoji: '🐙' },
+            { name: 'Kraken', type: 'carnivore', habitat: 'water', rarity: 'legendary', atk: 350, hp: 650, owned: false, emoji: '🦑' },
             { name: 'Hydra', type: 'carnivore', habitat: 'water', rarity: 'legendary', atk: 500, hp: 500, owned: false, emoji: '🐍' },
-            { name: 'Chimera', type: 'carnivore', habitat: 'land', rarity: 'legendary', atk: 450, hp: 550, owned: false, emoji: '🦁' },
+            { name: 'Chimera', type: 'carnivore', habitat: 'land', rarity: 'legendary', atk: 450, hp: 550, owned: false, emoji: '👹' },
             { name: 'Kì lân', type: 'omnivore', habitat: 'land', rarity: 'legendary', atk: 100, hp: 900, owned: false, emoji: '🦄' }
         ];
 
@@ -728,6 +903,102 @@
         // Biến toàn cục
         let currentRarity = 'common';
         let showOwnedOnly = true;
+        let playerPower = 0;
+
+        // Tính lực chiến từ các thẻ sở hữu
+        function calculatePlayerPower() {
+            const powerPerCard = {
+                'common': 100,
+                'rare': 200,
+                'super-rare': 350,
+                'ultra-rare': 600,
+                'legendary': 1000
+            };
+            
+            playerPower = allCards
+                .filter(card => card.owned)
+                .reduce((total, card) => total + (powerPerCard[card.rarity] || 0), 0);
+            
+            return playerPower;
+        }
+        
+        // Lấy bonus HP dựa trên mốc lực chiến
+        function getHpBonus(power) {
+            if (power >= 15000) return 350;
+            if (power >= 10000) return 200;
+            if (power >= 5000) return 100;
+            if (power >= 1000) return 30;
+            return 0;
+        }
+        
+        // Cập nhật hiển thị lực chiến
+        function updatePowerDisplay() {
+            calculatePlayerPower();
+            document.getElementById('power').textContent = playerPower;
+        }
+
+        // Hiển thị popup lực chiến
+        function showPowerPopup() {
+            const powerPerCard = {
+                'common': 100,
+                'rare': 200,
+                'super-rare': 350,
+                'ultra-rare': 600,
+                'legendary': 1000
+            };
+            
+            // Cập nhật tổng lực chiến
+            document.getElementById('powerTotalDisplay').textContent = playerPower;
+            
+            // Chi tiết từng rarity
+            let detailsHtml = '';
+            const rarityNames = {
+                'common': '⚪ Trắng (Common)',
+                'rare': '🟢 Xanh Lá (Rare)',
+                'super-rare': '🔵 Xanh Lam (Super Rare)',
+                'ultra-rare': '🟣 Tím (Ultra Rare)',
+                'legendary': '🟠 Cam (Legendary)'
+            };
+            
+            Object.keys(powerPerCard).forEach(rarity => {
+                const ownedCount = allCards.filter(c => c.owned && c.rarity === rarity).length;
+                const totalPower = ownedCount * powerPerCard[rarity];
+                if (ownedCount > 0 || totalPower > 0) {
+                    detailsHtml += `
+                        <div class="power-detail-item">
+                            <span class="power-detail-rarity">${rarityNames[rarity]}</span>
+                            <span class="power-detail-calc">${ownedCount} x ${powerPerCard[rarity]} = <strong>${totalPower}</strong></span>
+                        </div>
+                    `;
+                }
+            });
+            
+            document.getElementById('powerDetailsDisplay').innerHTML = detailsHtml;
+            document.getElementById('power-popup').classList.add('active');
+        }
+
+        function closePowerPopup() {
+            document.getElementById('power-popup').classList.remove('active');
+        }
+
+        // Hiển thị popup kim cương
+        function showDiamondPopup() {
+            document.getElementById('diamondTotalDisplay').textContent = playerDiamond;
+            document.getElementById('diamond-popup').classList.add('active');
+        }
+
+        function closeDiamondPopup() {
+            document.getElementById('diamond-popup').classList.remove('active');
+        }
+
+        // Hiển thị popup khắc hệ
+        function showTypeAdvantagePopup() {
+            document.getElementById('type-advantage-popup').classList.add('active');
+        }
+
+        function closeTypeAdvantagePopup() {
+            document.getElementById('type-advantage-popup').classList.remove('active');
+        }
 
         // Lọc thẻ theo tiêu chí
         function filterCards() {
@@ -776,6 +1047,9 @@
             if (ownedCount) {
                 ownedCount.textContent = owned;
             }
+            
+            // Cập nhật lực chiến
+            updatePowerDisplay();
         }
 
         // Chuyển tab độ hiếm
@@ -958,6 +1232,8 @@
                 sfxToggle.hasListener = true;
                 sfxToggle.addEventListener('click', function() {
                     this.classList.toggle('active');
+                    // Điều khiển âm thanh hiệu ứng
+                    sfxEnabled = this.classList.contains('active');
                 });
             }
         }
@@ -980,6 +1256,7 @@
             
             const gameState = {
                 playerMoney: playerMoney,
+                playerDiamond: playerDiamond,
                 cards: allCards.map(card => ({
                     name: card.name,
                     owned: card.owned
@@ -998,6 +1275,7 @@
                 try {
                     const gameState = JSON.parse(saved);
                     playerMoney = gameState.playerMoney || 5000;
+                    playerDiamond = gameState.playerDiamond || 0;
                     
                     // Cập nhật owned status cho các thẻ
                     if (gameState.cards) {
@@ -1009,13 +1287,17 @@
                         });
                     }
                     
-                    console.log('📊 Loaded from localStorage - Money:', playerMoney, 'Cards:', gameState.cards?.length || 0);
+                    console.log('📊 Loaded from localStorage - Money:', playerMoney, 'Diamonds:', playerDiamond, 'Cards:', gameState.cards?.length || 0);
                     updateMoney();
+                    updateDiamond();
+                    updatePowerDisplay();
                 } catch (e) {
                     console.error('Lỗi khi tải tiến trình:', e);
                 }
             } else {
                 console.log('📊 No saved data in localStorage - starting fresh');
+                updateDiamond();
+                updatePowerDisplay();
             }
         }
 
@@ -1030,10 +1312,12 @@
                 
                 // Reset playerMoney
                 playerMoney = 5000;
+                playerDiamond = 0;
                 
                 // Lưu gameState mới (tất cả thẻ owned = false)
                 const emptyGameState = {
                     playerMoney: 5000,
+                    playerDiamond: 0,
                     cards: allCards.map(card => ({
                         name: card.name,
                         owned: false
@@ -1125,7 +1409,9 @@
                         name: randomCard.name,
                         atk: Math.round(randomCard.atk * statMultiplier),
                         hp: Math.round(randomCard.hp * statMultiplier),
-                        emoji: randomCard.emoji
+                        maxHp: Math.round(randomCard.hp * statMultiplier),
+                        emoji: randomCard.emoji,
+                        habitat: randomCard.habitat
                     });
                 }
             }
@@ -1284,7 +1570,8 @@
                     hp: card.maxHp,
                     emoji: card.emoji,
                     currentHp: card.maxHp,
-                    rarity: card.rarity
+                    rarity: card.rarity,
+                    habitat: card.habitat
                 });
             } else {
                 return;
@@ -1315,9 +1602,16 @@
 
             // Setup battle state
             battleState.currentLevel = currentBattleLevel;
+            
+            // Calculate current power and HP bonus
+            calculatePlayerPower();
+            const hpBonus = getHpBonus(playerPower);
+            
             battleState.playerDeck = selectedCardsForBattle.map(card => ({
                 ...card,
-                currentHp: card.hp || card.currentHp
+                hp: (card.hp || card.currentHp) + hpBonus,
+                currentHp: (card.hp || card.currentHp) + hpBonus,
+                maxHp: (card.hp || card.currentHp) + hpBonus
             }));
             
             console.log('✅ Battle state playerDeck set:', battleState.playerDeck);
@@ -1406,6 +1700,21 @@
             document.getElementById('playerDeckCount').textContent = playerAlive;
             document.getElementById('enemyDeckCount').textContent = enemyAlive;
 
+            // Display first enemy card if not showing any
+            if (battleState.phase === 'select' && battleState.selectedEnemyCard === null) {
+                const firstAliveEnemy = battleState.enemyDeck.findIndex(c => c.currentHp > 0);
+                if (firstAliveEnemy >= 0) {
+                    const enemyCard = battleState.enemyDeck[firstAliveEnemy];
+                    document.getElementById('enemyCardEmoji').textContent = enemyCard.emoji;
+                    document.getElementById('enemyCardName').textContent = enemyCard.name;
+                    document.getElementById('enemyCardAtk').textContent = enemyCard.atk;
+                    document.getElementById('enemyCardHp').textContent = enemyCard.currentHp;
+                    document.getElementById('enemyMaxHP').textContent = enemyCard.maxHp;
+                    updateHealthBar('enemyHealthBar', enemyCard.currentHp, enemyCard.maxHp);
+                    document.getElementById('enemyHabitatBadge').textContent = getHabitatIcon(enemyCard.habitat);
+                }
+            }
+
             // Update turn info
             const turnText = battleState.phase === 'select' 
                 ? `Round ${battleState.round} - Chọn Thẻ Để Tấn Công` 
@@ -1461,6 +1770,7 @@
             document.getElementById('playerCardHp').textContent = selectedCard.currentHp;
             document.getElementById('playerMaxHP').textContent = selectedCard.maxHp;
             updateHealthBar('playerHealthBar', selectedCard.currentHp, selectedCard.maxHp);
+            document.getElementById('playerHabitatBadge').textContent = getHabitatIcon(selectedCard.habitat);
             
             renderBattleScreen();
         }
@@ -1491,6 +1801,21 @@
             }, 500);
         }
 
+        // Type advantage system: Land > Sky > Water > Land (circular)
+        function getTypeAdvantage(attackerHabitat, defenderHabitat) {
+            const advantages = {
+                'land': 'sky',    // Land khắc Sky
+                'sky': 'water',   // Sky khắc Water
+                'water': 'land'   // Water khắc Land
+            };
+            
+            // Nếu attacker's habitat khắc defender's habitat, tăng 20% damage
+            if (advantages[attackerHabitat] === defenderHabitat) {
+                return 1.2; // 20% boost
+            }
+            return 1; // Không khắc = normal damage
+        }
+
         // Execute battle round
         function executeBattleRound() {
             const playerCard = battleState.playerDeck[battleState.selectedPlayerCard];
@@ -1502,8 +1827,15 @@
             }
 
             // Calculate damage
-            const playerDamage = Math.max(1, playerCard.atk - Math.floor(Math.random() * 5));
-            const enemyDamage = Math.max(1, enemyCard.atk - Math.floor(Math.random() * 5));
+            let playerDamage = Math.max(1, playerCard.atk - Math.floor(Math.random() * 5));
+            let enemyDamage = Math.max(1, enemyCard.atk - Math.floor(Math.random() * 5));
+
+            // Apply type advantage
+            const playerAdvantage = getTypeAdvantage(playerCard.habitat, enemyCard.habitat);
+            const enemyAdvantage = getTypeAdvantage(enemyCard.habitat, playerCard.habitat);
+            
+            playerDamage = Math.round(playerDamage * playerAdvantage);
+            enemyDamage = Math.round(enemyDamage * enemyAdvantage);
 
             // Apply damage
             enemyCard.currentHp = Math.max(0, enemyCard.currentHp - playerDamage);
@@ -1531,16 +1863,15 @@
                 const nextAliveEnemy = battleState.enemyDeck.findIndex(c => c.currentHp > 0);
                 if (nextAliveEnemy >= 0) {
                     battleState.selectedEnemyCard = nextAliveEnemy;
-                    // Auto-display next enemy card
+                    // Auto-display next enemy card immediately
                     const nextEnemyCard = battleState.enemyDeck[nextAliveEnemy];
-                    setTimeout(() => {
-                        document.getElementById('enemyCardEmoji').textContent = nextEnemyCard.emoji;
-                        document.getElementById('enemyCardName').textContent = nextEnemyCard.name;
-                        document.getElementById('enemyCardAtk').textContent = nextEnemyCard.atk;
-                        document.getElementById('enemyCardHp').textContent = nextEnemyCard.currentHp;
-                        document.getElementById('enemyMaxHP').textContent = nextEnemyCard.maxHp;
-                        updateHealthBar('enemyHealthBar', nextEnemyCard.currentHp, nextEnemyCard.maxHp);
-                    }, 1500);
+                    document.getElementById('enemyCardEmoji').textContent = nextEnemyCard.emoji;
+                    document.getElementById('enemyCardName').textContent = nextEnemyCard.name;
+                    document.getElementById('enemyCardAtk').textContent = nextEnemyCard.atk;
+                    document.getElementById('enemyCardHp').textContent = nextEnemyCard.currentHp;
+                    document.getElementById('enemyMaxHP').textContent = nextEnemyCard.maxHp;
+                    updateHealthBar('enemyHealthBar', nextEnemyCard.currentHp, nextEnemyCard.maxHp);
+                    document.getElementById('enemyHabitatBadge').textContent = getHabitatIcon(nextEnemyCard.habitat);
                 }
             }
             
@@ -1564,10 +1895,86 @@
             }, 1500);
         }
 
+        // Get habitat icon
+        function getHabitatIcon(habitat) {
+            const icons = {
+                'land': '🏜️',
+                'water': '🌊',
+                'sky': '🌤️'
+            };
+            return icons[habitat] || '🌍';
+        }
+
         // Update battle field display
         function updateBattleField(playerDamage, enemyDamage) {
             const playerCard = battleState.playerDeck[battleState.selectedPlayerCard];
             const enemyCard = battleState.enemyDeck[battleState.selectedEnemyCard];
+
+            // Play hit sound wenn SFX enabled
+            if (sfxEnabled && (playerDamage > 0 || enemyDamage > 0)) {
+                hitSound.currentTime = 0; // Reset to start for multiple quick plays
+                hitSound.play().catch(err => console.log('Không thể phát âm thanh:', err));
+            }
+
+            // Add attack animations
+            const playerCardSlot = document.getElementById('playerCardSlot');
+            const enemyCardSlot = document.getElementById('enemyCardSlot');
+            
+            // If enemy takes damage - apply hit animation to enemy
+            if (playerDamage > 0) {
+                playerCardSlot.style.animation = 'none';
+                setTimeout(() => {
+                    playerCardSlot.style.animation = 'playerAttack 0.6s ease-in-out';
+                }, 10);
+                
+                enemyCardSlot.style.animation = 'none';
+                setTimeout(() => {
+                    enemyCardSlot.style.animation = 'enemyHit 0.6s ease-in-out';
+                }, 10);
+                
+                // Create explosion effect on enemy
+                const explosionEnemyEl = document.createElement('div');
+                explosionEnemyEl.style.position = 'absolute';
+                explosionEnemyEl.style.width = '80px';
+                explosionEnemyEl.style.height = '80px';
+                explosionEnemyEl.style.border = '3px solid rgba(255, 100, 100, 0.8)';
+                explosionEnemyEl.style.borderRadius = '50%';
+                explosionEnemyEl.style.pointerEvents = 'none';
+                explosionEnemyEl.style.animation = 'explosionEffect 0.6s ease-out';
+                explosionEnemyEl.style.left = '50%';
+                explosionEnemyEl.style.top = '50%';
+                explosionEnemyEl.style.transform = 'translate(-50%, -50%)';
+                enemyCardSlot.appendChild(explosionEnemyEl);
+                setTimeout(() => explosionEnemyEl.remove(), 600);
+            }
+            
+            // If player takes damage - apply hit animation to player
+            if (enemyDamage > 0) {
+                enemyCardSlot.style.animation = 'none';
+                setTimeout(() => {
+                    enemyCardSlot.style.animation = 'enemyAttack 0.6s ease-in-out';
+                }, 10);
+                
+                playerCardSlot.style.animation = 'none';
+                setTimeout(() => {
+                    playerCardSlot.style.animation = 'playerHit 0.6s ease-in-out';
+                }, 10);
+                
+                // Create explosion effect on player
+                const explosionPlayerEl = document.createElement('div');
+                explosionPlayerEl.style.position = 'absolute';
+                explosionPlayerEl.style.width = '80px';
+                explosionPlayerEl.style.height = '80px';
+                explosionPlayerEl.style.border = '3px solid rgba(100, 150, 255, 0.8)';
+                explosionPlayerEl.style.borderRadius = '50%';
+                explosionPlayerEl.style.pointerEvents = 'none';
+                explosionPlayerEl.style.animation = 'explosionEffect 0.6s ease-out';
+                explosionPlayerEl.style.left = '50%';
+                explosionPlayerEl.style.top = '50%';
+                explosionPlayerEl.style.transform = 'translate(-50%, -50%)';
+                playerCardSlot.appendChild(explosionPlayerEl);
+                setTimeout(() => explosionPlayerEl.remove(), 600);
+            }
 
             // Update player field
             document.getElementById('playerCardEmoji').textContent = playerCard.emoji;
@@ -1577,6 +1984,7 @@
             document.getElementById('playerHP').textContent = playerCard.currentHp;
             document.getElementById('playerMaxHP').textContent = playerCard.hp;
             updateHealthBar('playerHealthBar', playerCard.currentHp, playerCard.hp);
+            document.getElementById('playerHabitatBadge').textContent = getHabitatIcon(playerCard.habitat);
 
             // Update enemy field
             document.getElementById('enemyCardEmoji').textContent = enemyCard.emoji;
@@ -1584,8 +1992,9 @@
             document.getElementById('enemyCardAtk').textContent = enemyCard.atk;
             document.getElementById('enemyCardHp').textContent = enemyCard.currentHp;
             document.getElementById('enemyHP').textContent = enemyCard.currentHp;
-            document.getElementById('enemyMaxHP').textContent = enemyCard.hp;
-            updateHealthBar('enemyHealthBar', enemyCard.currentHp, enemyCard.hp);
+            document.getElementById('enemyMaxHP').textContent = enemyCard.maxHp;
+            updateHealthBar('enemyHealthBar', enemyCard.currentHp, enemyCard.maxHp);
+            document.getElementById('enemyHabitatBadge').textContent = getHabitatIcon(enemyCard.habitat);
 
             // Show damage numbers
             showDamageNumber('playerCardSlot', enemyDamage, true);
@@ -1652,6 +2061,7 @@
 
             let starsHtml = '';
             let goldReward = 0;
+            let diamondReward = 0;
             
             if (isVictory) {
                 // Calculate remaining player HP
@@ -1659,7 +2069,18 @@
                 const stars = levelSystem.calculateStars(battleState.currentLevel, remainingHp);
                 goldReward = levelSystem.getGoldReward(stars);
                 
+                // Check for diamond rewards at milestone levels
+                const diamondRewards = { 10: 50, 20: 100, 30: 150, 40: 200, 50: 300 };
+                if (diamondRewards[battleState.currentLevel]) {
+                    diamondReward = diamondRewards[battleState.currentLevel];
+                }
+                
                 // Star display
+                let diamondText = '';
+                if (diamondReward > 0) {
+                    diamondText = `<div class="diamond-reward">💎 +${diamondReward} Kim Cương!</div>`;
+                }
+                
                 starsHtml = `
                     <div class="star-display">
                         <div class="stars">
@@ -1668,6 +2089,7 @@
                             `).join('')}
                         </div>
                         <div class="star-text">${stars} Sao - +${goldReward} Vàng</div>
+                        ${diamondText}
                     </div>
                 `;
             }
@@ -1716,6 +2138,15 @@
                 );
 
                 gameState.playerMoney = playerMoney + goldReward;
+                
+                // Give diamond rewards at milestone levels
+                const diamondRewards = { 10: 50, 20: 100, 30: 150, 40: 200, 50: 300 };
+                let diamondReward = diamondRewards[battleState.currentLevel] || 0;
+                if (diamondReward > 0) {
+                    gameState.playerDiamond = (gameState.playerDiamond || 0) + diamondReward;
+                    playerDiamond += diamondReward;
+                }
+                
                 gameState.cards = allCards.map(card => ({
                     name: card.name,
                     owned: card.owned
@@ -1726,6 +2157,7 @@
                 
                 playerMoney += goldReward;
                 updateMoney();
+                updateDiamond();
                 generateLevels(); // Regenerate levels to show changes
             }
         }
@@ -1742,11 +2174,13 @@
         // Biến gacha
         let currentChest = 'normal';
         let playerMoney = 5000;
+        let playerDiamond = 0;
 
         const chestConfigs = {
             normal: {
                 name: 'Rương Thường',
                 price: 100,
+                currency: 'gold',
                 rates: [
                     { rarity: 'common', percent: 0.80 },
                     { rarity: 'rare', percent: 0.20 }
@@ -1755,6 +2189,7 @@
             rare: {
                 name: 'Rương Hiếm',
                 price: 500,
+                currency: 'gold',
                 rates: [
                     { rarity: 'common', percent: 0.40 },
                     { rarity: 'rare', percent: 0.30 },
@@ -1765,10 +2200,20 @@
             legend: {
                 name: 'Rương Truyền Thuyết',
                 price: 1000,
+                currency: 'gold',
                 rates: [
                     { rarity: 'super-rare', percent: 0.60 },
                     { rarity: 'ultra-rare', percent: 0.30 },
                     { rarity: 'legendary', percent: 0.10 }
+                ]
+            },
+            talent: {
+                name: 'Rương Trác Việc',
+                price: 100,
+                currency: 'diamond',
+                rates: [
+                    { rarity: 'ultra-rare', percent: 0.50 },
+                    { rarity: 'legendary', percent: 0.50 }
                 ]
             }
         };
@@ -1795,6 +2240,8 @@
         function updateChestInfo() {
             const config = chestConfigs[currentChest];
             const info = document.getElementById('selectedChestInfo');
+            const currency = config.currency === 'diamond' ? 'kim cương' : 'vàng';
+            const currencySymbol = config.currency === 'diamond' ? '💎' : '💰';
             
             let ratesHtml = '';
             config.rates.forEach(rate => {
@@ -1822,8 +2269,8 @@
                     ${ratesHtml}
                 </div>
                 <div class="gacha-buttons">
-                    <button class="gacha-btn-pull" onclick="pullChest(1)">📦 Mở x1 (${config.price} vàng)</button>
-                    <button class="gacha-btn-pull" onclick="pullChest(10)">📦 Mở x10 (${config.price * 10} vàng)</button>
+                    <button class="gacha-btn-pull" onclick="pullChest(1)">📦 Mở x1 (${config.price} ${currency})</button>
+                    <button class="gacha-btn-pull" onclick="pullChest(10)">📦 Mở x10 (${config.price * 10} ${currency})</button>
                 </div>
             `;
         }
@@ -1855,12 +2302,19 @@
             const config = chestConfigs[currentChest];
             const totalCost = config.price * count;
 
-            if (playerMoney < totalCost) {
-                alert(`❌ Vàng không đủ! Cần ${totalCost} vàng, bạn có ${playerMoney} vàng`);
-                return;
+            if (config.currency === 'gold') {
+                if (playerMoney < totalCost) {
+                    alert(`❌ Vàng không đủ! Cần ${totalCost} vàng, bạn có ${playerMoney} vàng`);
+                    return;
+                }
+                playerMoney -= totalCost;
+            } else if (config.currency === 'diamond') {
+                if (playerDiamond < totalCost) {
+                    alert(`❌ Kim cương không đủ! Cần ${totalCost} kim cương, bạn có ${playerDiamond} kim cương`);
+                    return;
+                }
+                playerDiamond -= totalCost;
             }
-
-            playerMoney -= totalCost;
             const pulledCards = [];
 
             // Random và lấy thẻ
@@ -1875,6 +2329,7 @@
             // Hiển thị kết quả
             showPullResult(pulledCards);
             updateMoney();
+            updateDiamond();
         }
 
         // Hiển thị kết quả pull
@@ -1911,6 +2366,10 @@
             if (shopMoney) {
                 shopMoney.textContent = playerMoney;
             }
+        }
+
+        function updateDiamond() {
+            document.getElementById('diamond').textContent = playerDiamond;
         }
 
         function initShopButtons() {
