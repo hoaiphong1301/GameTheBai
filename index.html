@@ -271,7 +271,7 @@
             <div class="page collection-page" data-page="collection">
                 <h2>🎴 Bộ Sưu Tập Thẻ Bài</h2>
                 <div class="collection-stats">
-                    <div>📊 Thẻ sở hữu: <strong id="ownedCount">8</strong>/54 | Tổng lực chiến: <strong id="powerTotalDisplay">8</strong></div>
+                    <div>📊 Thẻ sở hữu: <strong id="ownedCount">8</strong>/54 </div>
                 </div>
 
                 <!-- Nút chuyển đổi Sở hữu / Chưa sở hữu -->
@@ -398,7 +398,23 @@
                 <button class="setting-button" onclick="resetProgress()">🔄 Reset Tiến Trình</button>
                 <button class="setting-button" style="background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);">📱 Liên Hệ Hỗ Trợ</button>
             </div>
-        </div>
+
+            <!-- Daily Quest Page -->
+            <div class="page daily-quest-page" data-page="quest">
+                <h2>📋 Nhiệm Vụ Hằng Ngày</h2>
+                <div class="quest-header">
+                    <div class="quest-timer" id="questTimer">
+                        ⏱️ Reset in: <span id="timeRemaining">0h 0m</span>
+                    </div>
+                    <div class="quest-reward-total">
+                        💰 Hôm nay: <span id="todayEarned">0</span>/<span id="totalQuestReward">0</span>
+                    </div>
+                    <button class="quest-reset-btn" onclick="resetDailyQuestsForDiamonds()">💎 Reset (20)</button>
+                </div>
+                <div class="quests-container" id="questsContainer">
+                    <!-- Quests will be generated here -->
+                </div>
+            </div>
 
         <!-- Card Selection Page -->
         <div class="page card-selection-page" data-page="card-selection">
@@ -554,6 +570,10 @@
             <div class="nav-item active" onclick="switchPage('main')">
                 <div class="nav-icon">🏠</div>
                 <div class="nav-label">Trang Chính</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('quest')">
+                <div class="nav-icon">✓</div>
+                <div class="nav-label">Nhiệm Vụ</div>
             </div>
             <div class="nav-item" onclick="switchPage('collection')">
                 <div class="nav-icon">📚</div>
@@ -998,6 +1018,337 @@
 
         function closeTypeAdvantagePopup() {
             document.getElementById('type-advantage-popup').classList.remove('active');
+        }
+
+        /* ========== DAILY QUEST SYSTEM ========== */
+        
+        const questDefinitions = [
+            { id: 1, title: 'Nước Trong Lực', desc: 'Chiến thắng 1 ải với 3 động vật hệ water', reward: 500, check: (quest) => quest.winsWithWater3 >= 1 },
+            { id: 2, title: 'Đất Trong Lực', desc: 'Chiến thắng 1 ải với 3 động vật hệ land', reward: 500, check: (quest) => quest.winsWithLand3 >= 1 },
+            { id: 3, title: 'Trời Trong Lực', desc: 'Chiến thắng 1 ải với 3 động vật hệ sky', reward: 500, check: (quest) => quest.winsWithSky3 >= 1 },
+            { id: 4, title: 'Chiến Sĩ Mạnh Mẽ', desc: 'Tổng lực chiến đạt 5000', reward: 1000, check: (quest) => quest.totalPowerReached5000 },
+            { id: 5, title: 'Vô Hình Câu Tinh', desc: 'Vượt ải không có động vật hệ land', reward: 500, check: (quest) => quest.winsNoLand >= 1 },
+            { id: 6, title: 'Khô Héo', desc: 'Vượt ải không có động vật hệ water', reward: 500, check: (quest) => quest.winsNoWater >= 1 },
+            { id: 7, title: 'Trời Im Lặng', desc: 'Vượt ải không có động vật hệ sky', reward: 500, check: (quest) => quest.winsNoSky >= 1 },
+            { id: 8, title: 'Chiến Thắng Liên Tiếp', desc: 'Thắng 3 màn liên tiếp không thua', reward: 700, check: (quest) => (quest.maxWinStreak || 0) >= 3 },
+            { id: 9, title: 'Xanh Lam Hùng Tráng', desc: 'Thắng ải với 3+ thẻ xanh lam (rare)', reward: 500, check: (quest) => quest.winsWithRare3 >= 1 },
+            { id: 10, title: 'Vượt Mầu Tím', desc: 'Thắng màn 30 không có thẻ ultra-rare/legend', reward: 1000, check: (quest) => quest.winsLevel30NoPurple }
+        ];
+
+        let dailyQuests = [];
+        let questTimerInterval = null;
+
+        function initializeDailyQuests() {
+            const today = new Date().toDateString();
+            const savedQuests = JSON.parse(localStorage.getItem('dailyQuests'));
+            
+            // Initialize win streak if not exists
+            if (!localStorage.getItem('currentWinStreak')) {
+                localStorage.setItem('currentWinStreak', '0');
+            }
+            
+            if (savedQuests && savedQuests.date === today) {
+                dailyQuests = savedQuests.quests;
+            } else {
+                // Reset: pick 5 random quests
+                const shuffled = questDefinitions.sort(() => Math.random() - 0.5);
+                dailyQuests = shuffled.slice(0, 5).map(q => ({
+                    ...q,
+                    winsWithWater3: 0,
+                    winsWithLand3: 0,
+                    winsWithSky3: 0,
+                    totalPowerReached5000: false,
+                    winsNoLand: 0,
+                    winsNoWater: 0,
+                    winsNoSky: 0,
+                    winStreak: 0,
+                    maxWinStreak: 0,
+                    winsWithRare3: 0,
+                    winsLevel30NoPurple: false,
+                    completed: false
+                }));
+                saveDailyQuests();
+            }
+            renderDailyQuests();
+        }
+
+        function saveDailyQuests() {
+            const today = new Date().toDateString();
+            try {
+                localStorage.setItem('dailyQuests', JSON.stringify({
+                    date: today,
+                    quests: dailyQuests
+                }));
+                console.log('💾 Daily quests saved');
+            } catch (e) {
+                console.error('Error saving daily quests:', e);
+            }
+        }
+
+        function renderDailyQuests() {
+            const container = document.getElementById('questsContainer');
+            if (!container) {
+                console.error('Quest container not found');
+                return;
+            }
+            
+            container.innerHTML = ''; // Clear previous content
+            let totalReward = 0;
+            let earnedReward = 0;
+
+            if (!dailyQuests || dailyQuests.length === 0) {
+                container.innerHTML = '<p style="color: #aaa; text-align: center; padding: 20px;">Không có nhiệm vụ nào được tải</p>';
+                return;
+            }
+
+            dailyQuests.forEach((quest) => {
+                // Validate quest definition exists
+                const questDef = questDefinitions.find(d => d.id === quest.id);
+                if (!questDef) {
+                    console.warn(`Quest definition ${quest.id} not found`);
+                    return;
+                }
+                
+                // Check if quest is completed
+                const isCompleted = questDef.check(quest);
+                totalReward += quest.reward;
+                if (quest.completed) earnedReward += quest.reward;
+
+                const progressPercent = isCompleted ? 100 : 0;
+                const html = `
+                    <div class="quest-item ${quest.completed ? 'completed' : ''}">
+                        <div class="quest-info">
+                            <div class="quest-title">🎯 ${questDef.title}</div>
+                            <div class="quest-description">${questDef.desc}</div>
+                            <div class="quest-progress-bar">
+                                <div class="quest-progress-fill ${quest.completed ? 'completed' : ''}" style="width: ${progressPercent}%">
+                                    ${quest.completed ? '✓ Hoàn Thành' : '0/1'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quest-action">
+                            <div class="quest-reward">💰 ${questDef.reward}</div>
+                            <button class="quest-verify-btn ${quest.completed ? 'completed' : ''}" 
+                                ${quest.completed ? 'disabled' : ''} 
+                                onclick="claimQuestReward(${quest.id})"
+                                title="${quest.completed ? 'Đã nhận thưởng' : 'Nhấn để nhận thưởng'}">
+                                ${quest.completed ? '✓ Nhận' : 'Xác Nhận'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+
+            // Update totals
+            const totalElement = document.getElementById('totalQuestReward');
+            const earnedElement = document.getElementById('todayEarned');
+            
+            if (totalElement) totalElement.textContent = totalReward;
+            if (earnedElement) earnedElement.textContent = earnedReward;
+            
+            // Update timer
+            updateQuestTimer();
+            console.log(`📋 Rendered ${dailyQuests.length} quests - Earned: ${earnedReward}/${totalReward}`);
+        }
+
+        function claimQuestReward(questId) {
+            // Validate quest exists
+            const quest = dailyQuests.find(q => q.id === questId);
+            if (!quest) {
+                console.error(`Quest ID ${questId} not found in dailyQuests`);
+                return;
+            }
+            
+            // Validate quest definition
+            const questDef = questDefinitions.find(d => d.id === questId);
+            if (!questDef) {
+                console.error(`Quest definition ${questId} not found`);
+                return;
+            }
+            
+            // Check if already completed
+            if (quest.completed) {
+                console.warn(`Quest ${questId} already completed`);
+                return;
+            }
+            
+            // Check if quest objective is met
+            if (!questDef.check(quest)) {
+                console.warn(`Quest ${questId} objective not met`);
+                return;
+            }
+            
+            // Claim reward
+            quest.completed = true;
+            playerMoney += quest.reward;
+            saveProgress();
+            saveDailyQuests();
+            
+            // Refresh display
+            const container = document.getElementById('questsContainer');
+            if (container) {
+                container.innerHTML = '';
+                renderDailyQuests();
+            }
+            updateMoneyDisplay();
+            console.log(`✅ Quest ${questId} claimed! +${quest.reward} gold`);
+        }
+
+        function updateQuestTimer() {
+            // Clear previous timer if exists
+            if (questTimerInterval) {
+                clearInterval(questTimerInterval);
+                questTimerInterval = null;
+            }
+            
+            const now = new Date();
+            const nextReset = new Date();
+            nextReset.setDate(nextReset.getDate() + 1);
+            nextReset.setHours(0, 0, 0, 0);
+            
+            questTimerInterval = setInterval(() => {
+                const current = new Date();
+                const diff = nextReset - current;
+                
+                if (diff <= 0) {
+                    clearInterval(questTimerInterval);
+                    initializeDailyQuests();
+                    return;
+                }
+                
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const timerElement = document.getElementById('timeRemaining');
+                if (timerElement) {
+                    timerElement.textContent = `${hours}h ${minutes}m`;
+                }
+            }, 1000);
+        }
+
+        function updateQuestProgressFromBattle(completedLevel, deckCards) {
+            if (!dailyQuests || dailyQuests.length === 0) {
+                console.warn('No daily quests to update');
+                return;
+            }
+
+            const hasWater3 = deckCards.filter(c => c.habitat === 'water').length >= 3;
+            const hasLand3 = deckCards.filter(c => c.habitat === 'land').length >= 3;
+            const hasSky3 = deckCards.filter(c => c.habitat === 'sky').length >= 3;
+            const hasRare3 = deckCards.filter(c => c.rarity === 'rare').length >= 3;
+            const hasNoPurple = !deckCards.some(c => ['ultra-rare', 'legendary'].includes(c.rarity));
+            const noLand = !deckCards.some(c => c.habitat === 'land');
+            const noWater = !deckCards.some(c => c.habitat === 'water');
+            const noSky = !deckCards.some(c => c.habitat === 'sky');
+
+            // Update win streak using helper function
+            const winStreak = incrementWinStreak();
+
+            dailyQuests.forEach(quest => {
+                // Skip if already completed
+                if (quest.completed) return;
+
+                // Update each quest
+                if (quest.id === 1 && hasWater3) {
+                    quest.winsWithWater3++;
+                    console.log(`✓ Quest 1: 3 water combo +1 (total: ${quest.winsWithWater3})`);
+                }
+                
+                if (quest.id === 2 && hasLand3) {
+                    quest.winsWithLand3++;
+                    console.log(`✓ Quest 2: 3 land combo +1 (total: ${quest.winsWithLand3})`);
+                }
+                
+                if (quest.id === 3 && hasSky3) {
+                    quest.winsWithSky3++;
+                    console.log(`✓ Quest 3: 3 sky combo +1 (total: ${quest.winsWithSky3})`);
+                }
+                
+                if (quest.id === 4 && playerPower >= 5000) {
+                    quest.totalPowerReached5000 = true;
+                    console.log(`✓ Quest 4: Power reached 5000`);
+                }
+                
+                if (quest.id === 5 && noLand) {
+                    quest.winsNoLand++;
+                    console.log(`✓ Quest 5: Win without land +1 (total: ${quest.winsNoLand})`);
+                }
+                
+                if (quest.id === 6 && noWater) {
+                    quest.winsNoWater++;
+                    console.log(`✓ Quest 6: Win without water +1 (total: ${quest.winsNoWater})`);
+                }
+                
+                if (quest.id === 7 && noSky) {
+                    quest.winsNoSky++;
+                    console.log(`✓ Quest 7: Win without sky +1 (total: ${quest.winsNoSky})`);
+                }
+                
+                if (quest.id === 8) {
+                    quest.maxWinStreak = Math.max(quest.maxWinStreak || 0, winStreak);
+                    console.log(`✓ Quest 8: Win streak updated (current: ${winStreak}, max: ${quest.maxWinStreak})`);
+                }
+                
+                if (quest.id === 9 && hasRare3) {
+                    quest.winsWithRare3++;
+                    console.log(`✓ Quest 9: 3+ rare combo +1 (total: ${quest.winsWithRare3})`);
+                }
+                
+                if (quest.id === 10 && completedLevel === 30 && hasNoPurple) {
+                    quest.winsLevel30NoPurple = true;
+                    console.log(`✓ Quest 10: Completed level 30 without purple cards`);
+                }
+            });
+
+            saveDailyQuests();
+            console.log('📊 Daily quests updated after battle');
+        }
+
+        function resetWinStreak() {
+            localStorage.setItem('currentWinStreak', '0');
+            console.log('⏱️ Win streak reset to 0');
+        }
+        
+        function getCurrentWinStreak() {
+            return parseInt(localStorage.getItem('currentWinStreak') || '0');
+        }
+        
+        function incrementWinStreak() {
+            let winStreak = getCurrentWinStreak();
+            winStreak++;
+            localStorage.setItem('currentWinStreak', winStreak.toString());
+            return winStreak;
+        }
+
+        function resetDailyQuestsForDiamonds() {
+            // Check if player has 20 diamonds
+            if (playerDiamonds < 20) {
+                alert('❌ Cần 20 viên kim cương để reset nhiệm vụ');
+                return;
+            }
+
+            // Confirm action
+            if (!confirm('Xác nhận reset tất cả nhiệm vụ? (Tốn 20 kim cương)')) {
+                return;
+            }
+
+            // Deduct diamonds
+            playerDiamonds -= 20;
+
+            // Reset quests
+            localStorage.removeItem('dailyQuests');
+            localStorage.removeItem('currentWinStreak');
+            
+            // Reinitialize with fresh quests
+            initializeDailyQuests();
+            renderDailyQuests();
+            
+            // Save progress and update UI
+            saveGameProgress();
+            updateUI();
+            
+            console.log('🔄 Daily quests reset for 20 diamonds');
+            alert('✅ Đã reset tất cả nhiệm vụ!');
         }
 
         // Lọc thẻ theo tiêu chí
@@ -2054,6 +2405,11 @@
             overlay.className = 'battle-result-overlay';
 
             const isVictory = result === 'victory';
+            
+            if (!isVictory) {
+                resetWinStreak();
+            }
+            
             const title = isVictory ? '🎉 Chiến Thắng!' : '💀 Chiến Thua!';
             const text = isVictory 
                 ? 'Bạn đã vượt qua màn này!' 
@@ -2126,8 +2482,24 @@
                 const stars = levelSystem.calculateStars(battleState.currentLevel, remainingHp);
                 const goldReward = levelSystem.getGoldReward(stars);
 
-                if (!gameState.completedLevels.includes(battleState.currentLevel)) {
+                // Check if this is the first time completing this level
+                const isFirstCompletion = !gameState.completedLevels.includes(battleState.currentLevel);
+                
+                if (isFirstCompletion) {
                     gameState.completedLevels.push(battleState.currentLevel);
+                    // Only add gold reward on first completion
+                    gameState.playerMoney = playerMoney + goldReward;
+                    
+                    // Only give diamond rewards on first completion at milestone levels
+                    const diamondRewards = { 10: 50, 20: 100, 30: 150, 40: 200, 50: 300 };
+                    let diamondReward = diamondRewards[battleState.currentLevel] || 0;
+                    if (diamondReward > 0) {
+                        gameState.playerDiamond = (gameState.playerDiamond || 0) + diamondReward;
+                        playerDiamond += diamondReward;
+                    }
+                } else {
+                    // Re-playing a completed level - no rewards
+                    gameState.playerMoney = playerMoney;
                 }
                 
                 // Store level stars (keep best)
@@ -2136,16 +2508,6 @@
                     gameState.levelStars[battleState.currentLevel] || 0,
                     stars
                 );
-
-                gameState.playerMoney = playerMoney + goldReward;
-                
-                // Give diamond rewards at milestone levels
-                const diamondRewards = { 10: 50, 20: 100, 30: 150, 40: 200, 50: 300 };
-                let diamondReward = diamondRewards[battleState.currentLevel] || 0;
-                if (diamondReward > 0) {
-                    gameState.playerDiamond = (gameState.playerDiamond || 0) + diamondReward;
-                    playerDiamond += diamondReward;
-                }
                 
                 gameState.cards = allCards.map(card => ({
                     name: card.name,
@@ -2155,7 +2517,20 @@
                 localStorage.setItem('gameProgress', JSON.stringify(gameState));
                 console.log('💾 Saved to localStorage - Level:', battleState.currentLevel, 'Completed levels:', gameState.completedLevels);
                 
-                playerMoney += goldReward;
+                // Only add gold/diamonds if first completion
+                if (isFirstCompletion) {
+                    playerMoney += goldReward;
+                    console.log('🎉 First completion! Gold reward:', goldReward);
+                } else {
+                    console.log('⚠️ Level replayed - No gold reward');
+                }
+                
+                // Recalculate player power for quest checking
+                calculatePlayerPower();
+                
+                // Update daily quest progress
+                updateQuestProgressFromBattle(battleState.currentLevel, battleState.playerDeck);
+                
                 updateMoney();
                 updateDiamond();
                 generateLevels(); // Regenerate levels to show changes
@@ -2384,6 +2759,7 @@
             initToggleSwitches();
             initShopButtons();
             renderCards();
+            initializeDailyQuests();
             
             // Phát nhạc nền
             backgroundMusic.play().catch(err => {
