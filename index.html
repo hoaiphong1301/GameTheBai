@@ -271,7 +271,7 @@
             <div class="page collection-page" data-page="collection">
                 <h2>🎴 Bộ Sưu Tập Thẻ Bài</h2>
                 <div class="collection-stats">
-                    <div>📊 Thẻ sở hữu: <strong id="ownedCount">8</strong>/54 </div>
+                    <div>📊 Thẻ sở hữu: <strong id="ownedCount">8</strong>/57 </div>
                 </div>
 
                 <!-- Nút chuyển đổi Sở hữu / Chưa sở hữu -->
@@ -284,15 +284,15 @@
                 <div class="rarity-tabs">
                     <button class="rarity-tab active" onclick="switchRarity('common')">
                         <span class="rarity-dot common"></span>
-                        Common (15)
+                        Common (16)
                     </button>
                     <button class="rarity-tab" onclick="switchRarity('rare')">
                         <span class="rarity-dot rare"></span>
-                        Rare (15)
+                        Rare (16)
                     </button>
                     <button class="rarity-tab" onclick="switchRarity('super-rare')">
                         <span class="rarity-dot super-rare"></span>
-                        Super Rare (10)
+                        Super Rare (11)
                     </button>
                     <button class="rarity-tab" onclick="switchRarity('ultra-rare')">
                         <span class="rarity-dot ultra-rare"></span>
@@ -401,18 +401,9 @@
 
             <!-- Daily Quest Page -->
             <div class="page daily-quest-page" data-page="quest">
-                <h2>📋 Nhiệm Vụ Hằng Ngày</h2>
-                <div class="quest-header">
-                    <div class="quest-timer" id="questTimer">
-                        ⏱️ Reset in: <span id="timeRemaining">0h 0m</span>
-                    </div>
-                    <div class="quest-reward-total">
-                        💰 Hôm nay: <span id="todayEarned">0</span>/<span id="totalQuestReward">0</span>
-                    </div>
-                    <button class="quest-reset-btn" onclick="resetDailyQuestsForDiamonds()">💎 Reset (20)</button>
-                </div>
-                <div class="quests-container" id="questsContainer">
-                    <!-- Quests will be generated here -->
+                <h2>🏆 Thành Tựu</h2>
+                <div class="achievements-container" id="achievementsContainer">
+                    <!-- Achievements will be generated here -->
                 </div>
             </div>
 
@@ -844,7 +835,7 @@
         // Global state cho SFX
         let sfxEnabled = true;
         
-        // Dữ liệu tất cả 54 thẻ bài
+        // Dữ liệu tất cả 57 thẻ bài
         const allCards = [
             // Common (Trắng) - 16 loài
             { name: 'Mèo Rừng', type: 'carnivore', habitat: 'land', rarity: 'common', atk: 12, hp: 18, owned: false, emoji: '🐈‍⬛' },
@@ -1022,19 +1013,172 @@
 
         /* ========== DAILY QUEST SYSTEM ========== */
         
-        const questDefinitions = [
-            { id: 1, title: 'Nước Trong Lực', desc: 'Chiến thắng 1 ải với 3 động vật hệ water', reward: 500, check: (quest) => quest.winsWithWater3 >= 1 },
-            { id: 2, title: 'Đất Trong Lực', desc: 'Chiến thắng 1 ải với 3 động vật hệ land', reward: 500, check: (quest) => quest.winsWithLand3 >= 1 },
-            { id: 3, title: 'Trời Trong Lực', desc: 'Chiến thắng 1 ải với 3 động vật hệ sky', reward: 500, check: (quest) => quest.winsWithSky3 >= 1 },
-            { id: 4, title: 'Chiến Sĩ Mạnh Mẽ', desc: 'Tổng lực chiến đạt 5000', reward: 1000, check: (quest) => quest.totalPowerReached5000 },
-            { id: 5, title: 'Vô Hình Câu Tinh', desc: 'Vượt ải không có động vật hệ land', reward: 500, check: (quest) => quest.winsNoLand >= 1 },
-            { id: 6, title: 'Khô Héo', desc: 'Vượt ải không có động vật hệ water', reward: 500, check: (quest) => quest.winsNoWater >= 1 },
-            { id: 7, title: 'Trời Im Lặng', desc: 'Vượt ải không có động vật hệ sky', reward: 500, check: (quest) => quest.winsNoSky >= 1 },
-            { id: 8, title: 'Chiến Thắng Liên Tiếp', desc: 'Thắng 3 màn liên tiếp không thua', reward: 700, check: (quest) => (quest.maxWinStreak || 0) >= 3 },
-            { id: 9, title: 'Xanh Lam Hùng Tráng', desc: 'Thắng ải với 3+ thẻ xanh lam (rare)', reward: 500, check: (quest) => quest.winsWithRare3 >= 1 },
-            { id: 10, title: 'Vượt Mầu Tím', desc: 'Thắng màn 30 không có thẻ ultra-rare/legend', reward: 1000, check: (quest) => quest.winsLevel30NoPurple }
+        // ===== ACHIEVEMENT SYSTEM =====
+        const achievementDefinitions = [
+            // Combat achievements
+            { id: 1, title: '⚔️ Hiệp Sĩ Bắt Đầu', desc: 'Chiến thắng 10 trận', type: 'combat', target: 10, check: (progress) => progress.totalWins >= 10 },
+            { id: 2, title: '🔥 Chiến Binh Luyện Tập', desc: 'Chiến thắng 50 trận', type: 'combat', target: 50, check: (progress) => progress.totalWins >= 50 },
+            { id: 3, title: '👑 Vương Tướng Chiến Trường', desc: 'Chiến thắng 100 trận', type: 'combat', target: 100, check: (progress) => progress.totalWins >= 100 },
+            
+            // Element Masters
+            { id: 4, title: '🌊 Thần Nước', desc: 'Chiến thắng với 3+ động vật hệ nước (water)', type: 'element', check: (progress) => progress.winsWithWater3 >= 1 },
+            { id: 5, title: '🌍 Thần Đất', desc: 'Chiến thắng với 3+ động vật hệ đất (land)', type: 'element', check: (progress) => progress.winsWithLand3 >= 1 },
+            { id: 6, title: '☁️ Thần Trời', desc: 'Chiến thắng với 3+ động vật hệ trời (sky)', type: 'element', check: (progress) => progress.winsWithSky3 >= 1 },
+            
+            // Rarity achievements
+            { id: 7, title: '💎 Bộ Sưu Tập Hiếm', desc: 'Sở hữu 20 thẻ hiếm (rare)', type: 'collection', check: (progress) => progress.rareCardsOwned >= 20 },
+            { id: 8, title: '✨ Nhà Sưu Tập Hoàn Chỉnh', desc: 'Sở hữu tất cả 57 thẻ', type: 'collection', check: (progress) => progress.allCardsOwned },
+            { id: 9, title: '🎰 May Mắn Của Thần', desc: 'Nhận được 1 thẻ huyền thoại (legendary)', type: 'rarity', check: (progress) => progress.legendaryPulled },
+            
+            // Restriction challenges
+            { id: 10, title: '🌊 Thuần Nước', desc: 'Chiến thắng không dùng đất (land)', type: 'challenge', check: (progress) => progress.winsNoLand >= 1 },
+            { id: 11, title: '🌍 Thuần Đất', desc: 'Chiến thắng không dùng nước (water)', type: 'challenge', check: (progress) => progress.winsNoWater >= 1 },
+            { id: 12, title: '☁️ Thuần Trời', desc: 'Chiến thắng không dùng trời (sky)', type: 'challenge', check: (progress) => progress.winsNoSky >= 1 },
+            
+            // Power achievements
+            { id: 13, title: '💪 Lực Chiến Vượt Trội', desc: 'Tổng lực chiến đạt 5000', type: 'power', check: (progress) => progress.maxPowerReached >= 5000 },
+            { id: 14, title: '⚡ Lực Chiến Siêu Phàm', desc: 'Tổng lực chiến đạt 10000', type: 'power', check: (progress) => progress.maxPowerReached >= 10000 },
+            
+            // Win streak achievements
+            { id: 15, title: '🔥 Chuỗi Chiến Thắng', desc: 'Thắng liên tiếp 3 trận', type: 'streak', check: (progress) => progress.maxWinStreak >= 3 },
+            { id: 16, title: '🌟 Chuỗi Vàng', desc: 'Thắng liên tiếp 10 trận', type: 'streak', check: (progress) => progress.maxWinStreak >= 10 },
+            { id: 17, title: '👑 Chuỗi Huyền Thoại', desc: 'Thắng liên tiếp 20 trận', type: 'streak', check: (progress) => progress.maxWinStreak >= 20 },
+            
+            // Level achievements
+            { id: 18, title: '🎯 Vượt Qua Nửa Đường', desc: 'Hoàn thành màn 25', type: 'level', check: (progress) => progress.maxLevelCompleted >= 25 },
+            { id: 19, title: '🏔️ Đỉnh Cao Thách Thức', desc: 'Hoàn thành màn 50', type: 'level', check: (progress) => progress.maxLevelCompleted >= 50 },
+            { id: 20, title: '👑 Chinh Phục Toàn Bộ', desc: 'Hoàn thành tất cả 50 màn', type: 'level', check: (progress) => progress.allLevelsCompleted },
+            
+            // Rare achievements
+            { id: 21, title: '🎴 Hiểu Biết Thẻ Bài', desc: 'Sở hữu 3+ thẻ hiếm (rare)', type: 'special', check: (progress) => progress.rareCardsOwned >= 3 },
+            { id: 22, title: '⭐ Ngôi Sao Cuộc Sống', desc: 'Đạt 3 sao ở một màn bất kỳ', type: 'special', check: (progress) => progress.threeStarEarned }
         ];
 
+        let achievementProgress = {};
+
+        function initializeAchievements() {
+            const saved = localStorage.getItem('achievementProgress');
+            if (saved) {
+                try {
+                    achievementProgress = JSON.parse(saved);
+                } catch (e) {
+                    achievementProgress = {};
+                }
+            }
+            console.log('🏆 Achievements initialized:', Object.keys(achievementProgress).length, 'unlocked');
+        }
+
+        function saveAchievementProgress() {
+            localStorage.setItem('achievementProgress', JSON.stringify(achievementProgress));
+        }
+
+        function getAchievementProgress() {
+            const gameState = JSON.parse(localStorage.getItem('gameProgress') || '{}');
+            return {
+                totalWins: gameState.totalWins || 0,
+                maxWinStreak: gameState.maxWinStreak || 0,
+                maxPowerReached: gameState.maxPowerReached || 0,
+                maxLevelCompleted: gameState.maxLevelCompleted || 0,
+                allLevelsCompleted: gameState.completedLevels?.length === 50,
+                winsWithWater3: gameState.winsWithWater3 || 0,
+                winsWithLand3: gameState.winsWithLand3 || 0,
+                winsWithSky3: gameState.winsWithSky3 || 0,
+                winsNoWater: gameState.winsNoWater || 0,
+                winsNoLand: gameState.winsNoLand || 0,
+                winsNoSky: gameState.winsNoSky || 0,
+                rareCardsOwned: allCards.filter(c => c.owned && c.rarity === 'rare').length,
+                allCardsOwned: allCards.every(c => c.owned),
+                legendaryPulled: gameState.legendaryPulled || false,
+                threeStarEarned: gameState.threeStarEarned || false
+            };
+        }
+
+        function checkAndUnlockAchievements() {
+            const progress = getAchievementProgress();
+            let newAchievements = [];
+
+            achievementDefinitions.forEach(achievement => {
+                if (!achievementProgress[achievement.id] && achievement.check(progress)) {
+                    achievementProgress[achievement.id] = {
+                        id: achievement.id,
+                        title: achievement.title,
+                        unlockedAt: new Date().toISOString(),
+                        rewarded: false
+                    };
+                    newAchievements.push(achievement);
+                }
+            });
+
+            if (newAchievements.length > 0) {
+                saveAchievementProgress();
+                console.log('🏆 New achievements unlocked:', newAchievements.length);
+                newAchievements.forEach(a => {
+                    console.log(`  ✓ ${a.title}: ${a.desc}`);
+                });
+            }
+
+            return newAchievements;
+        }
+
+        function claimAchievementReward(achievementId) {
+            if (!achievementProgress[achievementId]) {
+                alert('❌ Thành tựu này chưa được mở khóa!');
+                return false;
+            }
+
+            if (achievementProgress[achievementId].rewarded) {
+                alert('✅ Bạn đã nhận thưởng cho thành tựu này rồi!');
+                return false;
+            }
+
+            // Award 20 diamonds
+            playerDiamond += 20;
+
+            achievementProgress[achievementId].rewarded = true;
+            saveAchievementProgress();
+            saveProgress();
+            updateDiamond();
+
+            console.log(`💎 Claimed reward for achievement ${achievementId}: +20 diamonds`);
+            alert('✅ Nhận thưởng thành công: +20 kim cương!');
+            renderAchievements();
+
+            return true;
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievementsContainer');
+            if (!container) return;
+
+            const progress = getAchievementProgress();
+            const unlockedCount = Object.keys(achievementProgress).length;
+
+            let html = `<div class="achievements-stats">
+                <div class="achievement-stat">🏆 Mở khóa: <strong>${unlockedCount}</strong>/${achievementDefinitions.length}</div>
+            </div>
+            <div class="achievements-list">`;
+
+            achievementDefinitions.forEach(achievement => {
+                const unlocked = !!achievementProgress[achievement.id];
+                const rewarded = unlocked && achievementProgress[achievement.id].rewarded;
+                const isMet = achievement.check(progress);
+
+                html += `<div class="achievement-item ${unlocked ? 'unlocked' : ''}" style="${!unlocked ? 'opacity: 0.6;' : ''}">
+                    <div class="achievement-content">
+                        <div class="achievement-header">
+                            <div class="achievement-title">${achievement.title}</div>
+                            <div class="achievement-reward">${unlocked ? (rewarded ? '✓ Đã nhận' : '<button class="reward-btn" onclick="claimAchievementReward(' + achievement.id + ')">Nhận (💎20)</button>') : '🔒'}</div>
+                        </div>
+                        <div class="achievement-desc">${achievement.desc}</div>
+                    </div>
+                </div>`;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        const questDefinitions = [];  // Keep empty for backward compatibility
         let dailyQuests = [];
         let questTimerInterval = null;
 
@@ -1322,7 +1466,7 @@
 
         function resetDailyQuestsForDiamonds() {
             // Check if player has 20 diamonds
-            if (playerDiamonds < 20) {
+            if (playerDiamond < 20) {
                 alert('❌ Cần 20 viên kim cương để reset nhiệm vụ');
                 return;
             }
@@ -1333,7 +1477,7 @@
             }
 
             // Deduct diamonds
-            playerDiamonds -= 20;
+            playerDiamond -= 20;
 
             // Reset quests
             localStorage.removeItem('dailyQuests');
@@ -1344,10 +1488,10 @@
             renderDailyQuests();
             
             // Save progress and update UI
-            saveGameProgress();
-            updateUI();
+            saveProgress();
+            updateDiamond();
             
-            console.log('🔄 Daily quests reset for 20 diamonds');
+            console.log('🔄 Daily quests reset for 20 diamonds. Remaining:', playerDiamond);
             alert('✅ Đã reset tất cả nhiệm vụ!');
         }
 
@@ -1461,6 +1605,9 @@
                 initShopButtons();
             } else if (pageName === 'settings') {
                 initToggleSwitches();
+            } else if (pageName === 'quest') {
+                checkAndUnlockAchievements();
+                renderAchievements();
             }
         }
 
@@ -1596,12 +1743,19 @@
             const saved = localStorage.getItem('gameProgress');
             let completedLevels = [];
             let levelStars = {};
+            let additionalData = {};
             
             if (saved) {
                 try {
                     const gameState = JSON.parse(saved);
                     completedLevels = gameState.completedLevels || [];
                     levelStars = gameState.levelStars || {};
+                    // Preserve all other achievement tracking data
+                    Object.keys(gameState).forEach(key => {
+                        if (!['playerMoney', 'playerDiamond', 'cards', 'completedLevels', 'levelStars'].includes(key)) {
+                            additionalData[key] = gameState[key];
+                        }
+                    });
                 } catch (e) {}
             }
             
@@ -1613,10 +1767,11 @@
                     owned: card.owned
                 })),
                 completedLevels: completedLevels,
-                levelStars: levelStars
+                levelStars: levelStars,
+                ...additionalData
             };
             localStorage.setItem('gameProgress', JSON.stringify(gameState));
-            console.log('💾 Saved progress:', gameState);
+            console.log('💾 Saved progress');
         }
 
         // Tải tiến trình từ localStorage
@@ -2466,7 +2621,7 @@
             if (isVictory) {
                 // Update progress with completed level
                 const saved = localStorage.getItem('gameProgress');
-                let gameState = { playerMoney: 5000, cards: [], completedLevels: [], levelStars: {} };
+                let gameState = { playerMoney: 5000, cards: [], completedLevels: [], levelStars: {}, totalWins: 0, maxWinStreak: 0, maxPowerReached: 0, maxLevelCompleted: 0 };
                 
                 if (saved) {
                     try {
@@ -2475,6 +2630,10 @@
                         gameState.cards = parsed.cards || [];
                         gameState.completedLevels = parsed.completedLevels || [];
                         gameState.levelStars = parsed.levelStars || {};
+                        gameState.totalWins = parsed.totalWins || 0;
+                        gameState.maxWinStreak = parsed.maxWinStreak || 0;
+                        gameState.maxPowerReached = parsed.maxPowerReached || 0;
+                        gameState.maxLevelCompleted = parsed.maxLevelCompleted || 0;
                     } catch (e) {}
                 }
 
@@ -2485,8 +2644,25 @@
                 // Check if this is the first time completing this level
                 const isFirstCompletion = !gameState.completedLevels.includes(battleState.currentLevel);
                 
+                // Increment total wins
+                gameState.totalWins++;
+                
+                // Update max win streak
+                const currentWinStreak = incrementWinStreak();
+                gameState.maxWinStreak = Math.max(gameState.maxWinStreak || 0, currentWinStreak);
+                
+                // Update max power reached
+                const currentPower = calculatePlayerPower();
+                gameState.maxPowerReached = Math.max(gameState.maxPowerReached || 0, currentPower);
+                
+                // Track 3-star achievement
+                if (stars === 3) {
+                    gameState.threeStarEarned = true;
+                }
+                
                 if (isFirstCompletion) {
                     gameState.completedLevels.push(battleState.currentLevel);
+                    gameState.maxLevelCompleted = Math.max(gameState.maxLevelCompleted || 0, battleState.currentLevel);
                     // Only add gold reward on first completion
                     gameState.playerMoney = playerMoney + goldReward;
                     
@@ -2494,12 +2670,14 @@
                     const diamondRewards = { 10: 50, 20: 100, 30: 150, 40: 200, 50: 300 };
                     let diamondReward = diamondRewards[battleState.currentLevel] || 0;
                     if (diamondReward > 0) {
-                        gameState.playerDiamond = (gameState.playerDiamond || 0) + diamondReward;
                         playerDiamond += diamondReward;
+                        console.log('💎 Diamond reward:', diamondReward, 'Total diamonds now:', playerDiamond);
                     }
+                    gameState.playerDiamond = playerDiamond;
                 } else {
                     // Re-playing a completed level - no rewards
                     gameState.playerMoney = playerMoney;
+                    gameState.playerDiamond = playerDiamond;
                 }
                 
                 // Store level stars (keep best)
@@ -2528,11 +2706,19 @@
                 // Recalculate player power for quest checking
                 calculatePlayerPower();
                 
-                // Update daily quest progress
+                // Update daily quest progress (deprecated, kept for compatibility)
                 updateQuestProgressFromBattle(battleState.currentLevel, battleState.playerDeck);
                 
                 updateMoney();
                 updateDiamond();
+                
+                // Check for new achievements after battle
+                const newAchievements = checkAndUnlockAchievements();
+                if (newAchievements.length > 0) {
+                    newAchievements.forEach(achievement => {
+                        console.log(`🏆 Achievement Unlocked: ${achievement.title}`);
+                    });
+                }
                 generateLevels(); // Regenerate levels to show changes
             }
         }
@@ -2711,8 +2897,13 @@
         function showPullResult(cards) {
             const uniqueCards = [];
             let totalRefund = 0;
+            let hasLegendary = false;
 
             cards.forEach(card => {
+                if (card.rarity === 'legendary') {
+                    hasLegendary = true;
+                }
+                
                 if (card.owned) {
                     // Thẻ đã có → hoàn tiền
                     totalRefund += refundTable[card.rarity];
@@ -2727,11 +2918,22 @@
                 playerMoney += totalRefund;
             }
 
+            // Track legendary pull for achievement
+            if (hasLegendary) {
+                const saved = localStorage.getItem('gameProgress');
+                const gameState = saved ? JSON.parse(saved) : {};
+                gameState.legendaryPulled = true;
+                localStorage.setItem('gameProgress', JSON.stringify(gameState));
+            }
+
             // Hiển thị modal popup
             showGachaModal(uniqueCards, totalRefund);
             renderCards();
             updateMoney();
             saveProgress();
+            
+            // Check for new achievements after gacha
+            checkAndUnlockAchievements();
         }
 
         // Cập nhật tiền hiển thị
@@ -2759,7 +2961,9 @@
             initToggleSwitches();
             initShopButtons();
             renderCards();
-            initializeDailyQuests();
+            initializeAchievements();
+            checkAndUnlockAchievements();
+            renderAchievements();
             
             // Phát nhạc nền
             backgroundMusic.play().catch(err => {
