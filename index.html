@@ -229,6 +229,27 @@
 </head>
 <body>
     <div class="game-container">
+        <!-- Menu Button (Mobile) -->
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+
+        <!-- Mobile Navigation Drawer -->
+        <div class="mobile-nav-drawer" id="mobileNavDrawer">
+            <div class="mobile-nav-header">
+                <h3>Menu</h3>
+                <button class="mobile-nav-close" onclick="closeMobileMenu()">✕</button>
+            </div>
+            <nav class="mobile-nav-items">
+                <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('main')">🏠 Trang Chính</a>
+                <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('quest')">✓ Thành Tựu</a>
+                <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('collection')">📚 Bộ Sưu Tập</a>
+                <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('shop')">🛍️ Cửa Hàng</a>
+                <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('settings')">⚙️ Cài Đặt</a>
+            </nav>
+        </div>
+
+        <!-- Overlay for drawer -->
+        <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileMenu()"></div>
+
         <!-- Header -->
         <div class="game-header">
             <div class="game-title">🎴 Card Quest</div>
@@ -443,6 +464,9 @@
                 <div class="selection-info">
                     <span class="selected-count">Đã chọn: <strong id="selectedCardCount">0</strong>/5</span>
                 </div>
+
+                <!-- Deck Presets Container -->
+                <div id="deckPresetsContainer" class="deck-presets-container"></div>
                 
                 <div class="selection-grid-scroll">
                     <div class="selection-grid" id="selectionGrid">
@@ -462,11 +486,12 @@
         <div class="page battle-page" data-page="battle">
             <div class="battle-top">
                 <h2>⚔️ Trận Đấu - Màn <span id="battleLevelNum">1</span></h2>
+                <div id="bossBadge" class="boss-badge" style="display: none;">👑 BOSS</div>
                 <button class="exit-battle-btn" onclick="exitBattle()">🔙</button>
             </div>
 
             <!-- Type Advantage Button (Top Toolbar) -->
-            <div class="battle-toolbar">
+            <div class="battle-toolbar" style="display: none;">
                 <button class="type-advantage-btn" onclick="showTypeAdvantagePopup()" title="Xem thông tin khắc hệ">
                     <span class="type-advantage-icon">🔄</span>
                     <span class="type-advantage-label">Khắc Hệ</span>
@@ -474,23 +499,6 @@
             </div>
 
             <div class="battle-main">
-                <!-- Player Deck (at top for easy access) -->
-                <div class="player-deck">
-                    <h4>🎴 Bộ Thẻ Của Bạn</h4>
-                    <div class="deck-scroll-container">
-                        <div class="deck-grid" id="playerDeck">
-                            <!-- Thẻ sẽ được tạo bằng JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons (moved to top) -->
-                <div class="battle-actions">
-                    <button class="action-btn confirm-btn" id="confirmBtn" onclick="confirmBattleAction()">⚔️ Chọn Thẻ Để Tấn Công</button>
-                    <button class="action-btn keep-btn" id="keepBtn" onclick="keepBattleCard()" style="display: none;">🔄 Giữ Thẻ Hiện Tại</button>
-                    <button class="action-btn change-btn" id="changeBtn" onclick="changeBattleCard()" style="display: none;">↔️ Đổi Thẻ Khác</button>
-                </div>
-
                 <!-- Battle Container (enemy vs player) -->
                 <div class="battle-container">
                     <!-- Enemy Side -->
@@ -553,7 +561,25 @@
                         <h3 id="turnText">Round 1 - Chọn Thẻ</h3>
                     </div>
                 </div>
-            </div>
+
+                <!-- Player Deck + Action Buttons (at bottom) -->
+                <div class="battle-bottom-section">
+                    <div class="player-deck">
+                        <h4>🎴 Bộ Thẻ Của Bạn</h4>
+                        <div class="deck-scroll-container">
+                            <div class="deck-grid" id="playerDeck">
+                                <!-- Thẻ sẽ được tạo bằng JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons (beside player deck) -->
+                    <div class="battle-actions">
+                        <button class="action-btn confirm-btn" id="confirmBtn" onclick="confirmBattleAction()">⚔️ Tấn Công</button>
+                        <button class="action-btn keep-btn" id="keepBtn" onclick="keepBattleCard()" style="display: none;">🔄 Giữ Lại</button>
+                        <button class="action-btn change-btn" id="changeBtn" onclick="changeBattleCard()" style="display: none;">↔️ Đổi Thẻ</button>
+                    </div>
+                </div>
         </div>
 
         <!-- Navigation Bar -->
@@ -1179,6 +1205,201 @@
         }
 
         const questDefinitions = [];  // Keep empty for backward compatibility
+
+        // ===== BOSS BATTLES SYSTEM =====
+        const bossLevels = [10, 20, 30, 40, 50];
+        
+        const bosses = {
+            10: { name: '🦁 Sư Tử Vàng', emoji: '🦁', atk: 25, hp: 45, cards: 2, hpMultiplier: 2.5, reward: { gold: 600, diamond: 50 } },
+            20: { name: '🦈 Cá Mập Trắng', emoji: '🦈', atk: 35, hp: 60, cards: 2, hpMultiplier: 3, reward: { gold: 1000, diamond: 100 } },
+            30: { name: '🐉 Rồng Xanh', emoji: '🐉', atk: 55, hp: 80, cards: 3, hpMultiplier: 3.5, reward: { gold: 1500, diamond: 150 } },
+            40: { name: '🦅 Đại Bàng Vàng', emoji: '🦅', atk: 85, hp: 120, cards: 2, hpMultiplier: 4, reward: { gold: 2000, diamond: 200 } },
+            50: { name: '👑 Vua Huyền Thoại', emoji: '👑', atk: 150, hp: 200, cards: 3, hpMultiplier: 5, reward: { gold: 5000, diamond: 300 } }
+        };
+
+        function isBossLevel(level) {
+            return bossLevels.includes(level);
+        }
+
+        function getBossInfo(level) {
+            return bosses[level] || null;
+        }
+
+        // ===== DECK PRESETS SYSTEM =====
+        let deckPresets = {};
+        const MAX_DECK_PRESETS = 3;
+
+        function initializeDeckPresets() {
+            const saved = localStorage.getItem('deckPresets');
+            if (saved) {
+                try {
+                    deckPresets = JSON.parse(saved);
+                } catch (e) {
+                    deckPresets = {};
+                }
+            }
+            console.log('🎴 Deck presets initialized:', Object.keys(deckPresets).length);
+        }
+
+        function saveDeckPreset(name, cards) {
+            if (Object.keys(deckPresets).length >= MAX_DECK_PRESETS && !deckPresets[name]) {
+                alert('❌ Chỉ có thể lưu tối đa 3 bộ bài!');
+                return false;
+            }
+
+            if (!name || name.trim() === '') {
+                alert('❌ Vui lòng nhập tên bộ bài!');
+                return false;
+            }
+
+            if (!Array.isArray(cards) || cards.length !== 5) {
+                alert('❌ Bộ bài phải có đủ 5 thẻ!');
+                return false;
+            }
+
+            deckPresets[name] = cards.map(card => ({ name: card.name }));
+            localStorage.setItem('deckPresets', JSON.stringify(deckPresets));
+            console.log(`💾 Deck preset saved: ${name}`);
+            return true;
+        }
+
+        function deleteDeckPreset(name) {
+            delete deckPresets[name];
+            localStorage.setItem('deckPresets', JSON.stringify(deckPresets));
+            console.log(`🗑️ Deck preset deleted: ${name}`);
+        }
+
+        function loadDeckPreset(name) {
+            const preset = deckPresets[name];
+            if (!preset) return null;
+
+            const loadedCards = preset.map(cardRef => {
+                return allCards.find(c => c.name === cardRef.name);
+            }).filter(c => c !== undefined);
+
+            if (loadedCards.length === 5) {
+                return loadedCards;
+            }
+
+            console.log('❌ Preset deck incomplete or cards missing');
+            return null;
+        }
+
+        function renderDeckPresetsUI(targetElementId) {
+            const container = document.getElementById(targetElementId);
+            if (!container) return;
+
+            let html = `<div class="deck-presets-section">
+                <div class="deck-presets-header">
+                    <h4>📚 Bộ Bài Đã Lưu</h4>
+                    <button class="btn-save-preset" onclick="openSaveDeckModal()">💾 Lưu Bộ Hiện Tại</button>
+                </div>
+                <div class="deck-presets-list">`;
+
+            if (Object.keys(deckPresets).length === 0) {
+                html += '<p class="empty-preset">Chưa có bộ bài được lưu</p>';
+            } else {
+                Object.keys(deckPresets).forEach(presetName => {
+                    const preset = deckPresets[presetName];
+                    html += `<div class="preset-item">
+                        <div class="preset-info">
+                            <div class="preset-name">${presetName}</div>
+                            <div class="preset-cards">${preset.map(c => c.name).join(', ')}</div>
+                        </div>
+                        <div class="preset-actions">
+                            <button class="btn-load-preset" onclick="loadAndApplyPreset('${presetName}')">📂 Load</button>
+                            <button class="btn-delete-preset" onclick="deleteDeckPresetUI('${presetName}')">🗑️</button>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function openSaveDeckModal() {
+            const name = prompt('📝 Nhập tên bộ bài:');
+            if (name === null) return;
+
+            const selectedCards = document.querySelectorAll('.selection-card.selected');
+            if (selectedCards.length !== 5) {
+                alert('❌ Vui lòng chọn đủ 5 thẻ!');
+                return;
+            }
+
+            const cards = Array.from(selectedCards).map(el => {
+                const cardName = el.querySelector('.selection-card-name').textContent;
+                return allCards.find(c => c.name === cardName);
+            });
+
+            if (saveDeckPreset(name, cards)) {
+                alert(`✅ Bộ bài "${name}" đã được lưu!`);
+                renderDeckPresetsUI('deckPresetsContainer');
+            }
+        }
+
+        function loadAndApplyPreset(presetName) {
+            const cards = loadDeckPreset(presetName);
+            if (!cards) {
+                alert('❌ Không thể tải bộ bài này!');
+                return;
+            }
+
+            // Clear current selection
+            document.querySelectorAll('.selection-card.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Clear selectedCardsForBattle array
+            selectedCardsForBattle = [];
+
+            // Apply new selection
+            cards.forEach(cardData => {
+                const foundCard = allCards.find(c => c.name === cardData.name);
+                if (foundCard) {
+                    selectedCardsForBattle.push({
+                        name: foundCard.name,
+                        atk: foundCard.atk,
+                        hp: foundCard.maxHp,
+                        emoji: foundCard.emoji,
+                        currentHp: foundCard.maxHp,
+                        rarity: foundCard.rarity,
+                        habitat: foundCard.habitat
+                    });
+                    const cardEl = Array.from(document.querySelectorAll('.selection-card')).find(el => 
+                        el.querySelector('.selection-card-name')?.textContent === cardData.name
+                    );
+                    if (cardEl) {
+                        cardEl.classList.add('selected');
+                    }
+                }
+            });
+
+            updateSelectedCount();
+            alert(`✅ Bộ bài "${presetName}" đã được tải!`);
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCardCount').textContent = selectedCardsForBattle.length;
+            
+            const confirmBtn = document.getElementById('confirmSelectionBtn');
+            confirmBtn.disabled = selectedCardsForBattle.length !== 5;
+            if (selectedCardsForBattle.length === 5) {
+                confirmBtn.textContent = '✓ Bắt Đầu';
+            } else {
+                confirmBtn.textContent = `✓ ${selectedCardsForBattle.length}/5`;
+            }
+        }
+
+        function deleteDeckPresetUI(presetName) {
+            if (confirm(`⚠️ Xóa bộ bài "${presetName}"?`)) {
+                deleteDeckPreset(presetName);
+                renderDeckPresetsUI('deckPresetsContainer');
+                alert(`✅ Bộ bài "${presetName}" đã được xóa!`);
+            }
+        }
+
         let dailyQuests = [];
         let questTimerInterval = null;
 
@@ -1573,6 +1794,26 @@
             renderCards();
         }
 
+        // Mobile Menu Functions
+        function toggleMobileMenu() {
+            const drawer = document.getElementById('mobileNavDrawer');
+            const overlay = document.getElementById('mobileNavOverlay');
+            if (drawer) drawer.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('active');
+        }
+
+        function closeMobileMenu() {
+            const drawer = document.getElementById('mobileNavDrawer');
+            const overlay = document.getElementById('mobileNavOverlay');
+            if (drawer) drawer.classList.remove('active');
+            if (overlay) overlay.classList.remove('active');
+        }
+
+        function switchPageAndCloseMenu(pageName) {
+            switchPage(pageName);
+            closeMobileMenu();
+        }
+
         // Chuyển trang
         function switchPage(pageName) {
             // Ẩn tất cả các trang
@@ -1583,6 +1824,16 @@
             const selectedPage = document.querySelector(`[data-page="${pageName}"]`);
             if (selectedPage) {
                 selectedPage.classList.add('active');
+            }
+
+            // Hide/Show menu button based on page
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            if (menuBtn) {
+                if (pageName === 'battle') {
+                    menuBtn.style.display = 'none';
+                } else {
+                    menuBtn.style.display = 'block';
+                }
             }
 
             // Cập nhật nav item active - chỉ khi có event
@@ -1877,6 +2128,11 @@
         
         // Function to create enemy level
         function createEnemyLevel(levelNum) {
+            // Check if this is a boss level
+            if (isBossLevel(levelNum)) {
+                return createBossLevel(levelNum);
+            }
+
             // Calculate which cards to use based on level and rarity
             let availableCards = [];
             
@@ -1924,9 +2180,63 @@
             
             return {
                 name: `Màn ${levelNum}`,
-                deck: enemyDeck
+                deck: enemyDeck,
+                isBoss: false
             };
         }
+
+        function createBossLevel(levelNum) {
+            const bossInfo = getBossInfo(levelNum);
+            if (!bossInfo) return null;
+
+            // Select cards based on level
+            let availableCards = [];
+            if (levelNum <= 20) {
+                availableCards = allCards.filter(c => c.rarity === 'rare');
+            } else if (levelNum <= 30) {
+                availableCards = allCards.filter(c => c.rarity === 'super-rare');
+            } else if (levelNum <= 40) {
+                availableCards = allCards.filter(c => c.rarity === 'ultra-rare');
+            } else {
+                availableCards = allCards.filter(c => c.rarity === 'legendary');
+            }
+
+            // Create minion cards first (slots 1-4)
+            const bossDeck = [];
+            for (let i = 0; i < 4; i++) {
+                const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+                if (randomCard) {
+                    bossDeck.push({
+                        name: randomCard.name,
+                        atk: Math.round(randomCard.atk),
+                        hp: Math.round(randomCard.hp),
+                        maxHp: Math.round(randomCard.hp),
+                        emoji: randomCard.emoji,
+                        habitat: randomCard.habitat
+                    });
+                }
+            }
+
+            // Add the main boss card as the 5th card (final card) - use fixed boss card
+            const bossCard = {
+                name: bossInfo.name,
+                atk: Math.round(bossInfo.atk * 1.5),
+                hp: Math.round(bossInfo.hp * bossInfo.hpMultiplier),
+                maxHp: Math.round(bossInfo.hp * bossInfo.hpMultiplier),
+                emoji: bossInfo.emoji,
+                habitat: '⚔️',
+                isBoss: true
+            };
+            bossDeck.push(bossCard);
+
+            return {
+                name: bossInfo.name,
+                deck: bossDeck,
+                isBoss: true,
+                bossLevel: levelNum
+            };
+        }
+        
         
         // Keep level 1 for reference (will be overwritten above but showing structure)
         // Old levelEnemies object continues below:
@@ -1981,6 +2291,7 @@
 
             // Render card selection page
             renderCardSelection(ownedCards);
+            renderDeckPresetsUI('deckPresetsContainer');
             switchPage('card-selection');
         }
 
@@ -2133,6 +2444,16 @@
 
             // Switch to battle page
             document.getElementById('battleLevelNum').textContent = currentBattleLevel;
+            
+            // Show boss badge if it's a boss level
+            const bossBadge = document.getElementById('bossBadge');
+            if (enemy.isBoss) {
+                bossBadge.style.display = 'block';
+                bossBadge.textContent = `👑 ${enemy.name}`;
+            } else {
+                bossBadge.style.display = 'none';
+            }
+            
             switchPage('battle');
             
             // Render after DOM ready
@@ -2580,10 +2901,21 @@
                 const stars = levelSystem.calculateStars(battleState.currentLevel, remainingHp);
                 goldReward = levelSystem.getGoldReward(stars);
                 
-                // Check for diamond rewards at milestone levels
-                const diamondRewards = { 10: 50, 20: 100, 30: 150, 40: 200, 50: 300 };
-                if (diamondRewards[battleState.currentLevel]) {
-                    diamondReward = diamondRewards[battleState.currentLevel];
+                // Check for boss level rewards
+                if (isBossLevel(battleState.currentLevel)) {
+                    const bossInfo = getBossInfo(battleState.currentLevel);
+                    if (bossInfo) {
+                        diamondReward = bossInfo.reward.diamond;
+                        // Boss battles get 50% more gold
+                        goldReward = Math.round(goldReward * 1.5);
+                        console.log(`👑 Boss defeated! Gold: ${goldReward}, Diamonds: ${diamondReward}`);
+                    }
+                } else {
+                    // Check for milestone level diamond rewards (if not a boss)
+                    const diamondRewards = { 10: 50, 20: 100, 30: 150, 40: 200, 50: 300 };
+                    if (diamondRewards[battleState.currentLevel]) {
+                        diamondReward = diamondRewards[battleState.currentLevel];
+                    }
                 }
                 
                 // Star display
@@ -2639,7 +2971,13 @@
 
                 const remainingHp = battleState.playerDeck.reduce((sum, card) => sum + Math.max(0, card.currentHp), 0);
                 const stars = levelSystem.calculateStars(battleState.currentLevel, remainingHp);
-                const goldReward = levelSystem.getGoldReward(stars);
+                let goldReward = levelSystem.getGoldReward(stars);
+
+                // Check if this is a boss battle
+                const isBossBattle = isBossLevel(battleState.currentLevel);
+                if (isBossBattle) {
+                    goldReward = Math.round(goldReward * 1.5); // +50% gold for boss
+                }
 
                 // Check if this is the first time completing this level
                 const isFirstCompletion = !gameState.completedLevels.includes(battleState.currentLevel);
@@ -2665,15 +3003,9 @@
                     gameState.maxLevelCompleted = Math.max(gameState.maxLevelCompleted || 0, battleState.currentLevel);
                     // Only add gold reward on first completion
                     gameState.playerMoney = playerMoney + goldReward;
-                    
-                    // Only give diamond rewards on first completion at milestone levels
-                    const diamondRewards = { 10: 50, 20: 100, 30: 150, 40: 200, 50: 300 };
-                    let diamondReward = diamondRewards[battleState.currentLevel] || 0;
-                    if (diamondReward > 0) {
-                        playerDiamond += diamondReward;
-                        console.log('💎 Diamond reward:', diamondReward, 'Total diamonds now:', playerDiamond);
-                    }
                     gameState.playerDiamond = playerDiamond;
+                    
+                    console.log(`🎁 Level ${battleState.currentLevel} completed! Gold: ${goldReward}, Diamonds: ${diamondReward}`);
                 } else {
                     // Re-playing a completed level - no rewards
                     gameState.playerMoney = playerMoney;
@@ -2690,25 +3022,23 @@
                 gameState.cards = allCards.map(card => ({
                     name: card.name,
                     owned: card.owned
-                }));
-
+                }));                
                 localStorage.setItem('gameProgress', JSON.stringify(gameState));
                 console.log('💾 Saved to localStorage - Level:', battleState.currentLevel, 'Completed levels:', gameState.completedLevels);
                 
                 // Only add gold/diamonds if first completion
                 if (isFirstCompletion) {
                     playerMoney += goldReward;
-                    console.log('🎉 First completion! Gold reward:', goldReward);
+                    playerDiamond += diamondReward;
+                    console.log('🎉 First completion! Gold:', goldReward, 'Diamonds:', diamondReward);
                 } else {
-                    console.log('⚠️ Level replayed - No gold reward');
+                    console.log('⚠️ Level replayed - No reward');
                 }
                 
                 // Recalculate player power for quest checking
                 calculatePlayerPower();
                 
-                // Update daily quest progress (deprecated, kept for compatibility)
-                updateQuestProgressFromBattle(battleState.currentLevel, battleState.playerDeck);
-                
+                // Update display
                 updateMoney();
                 updateDiamond();
                 
@@ -2964,6 +3294,7 @@
             initializeAchievements();
             checkAndUnlockAchievements();
             renderAchievements();
+            initializeDeckPresets();
             
             // Phát nhạc nền
             backgroundMusic.play().catch(err => {

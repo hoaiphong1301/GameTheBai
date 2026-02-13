@@ -931,7 +931,7 @@ select {
 .game-nav {
     background: linear-gradient(90deg, #16213e 0%, #0f3460 100%);
     padding: 15px 20px;
-    display: flex;
+    display: none;
     justify-content: center;
     gap: 30px;
     border-top: 3px solid #e94560;
@@ -971,6 +971,125 @@ select {
 
 .nav-label {
     font-size: 12px;
+}
+
+/* ===== MOBILE MENU STYLES ===== */
+.mobile-menu-btn {
+    display: none;
+    position: fixed;
+    top: 8px;
+    left: 15px;
+    background: linear-gradient(135deg, #e94560 0%, #c82333 100%);
+    border: none;
+    color: #fff;
+    font-size: 28px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(233, 69, 96, 0.5);
+}
+
+.mobile-menu-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.7);
+}
+
+.mobile-menu-btn:active {
+    transform: scale(0.95);
+}
+
+/* Mobile Navigation Drawer */
+.mobile-nav-drawer {
+    position: fixed;
+    left: -300px;
+    top: 0;
+    width: 300px;
+    height: 100vh;
+    background: linear-gradient(180deg, #16213e 0%, #0f3460 100%);
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    border-right: 3px solid #e94560;
+}
+
+.mobile-nav-drawer.active {
+    left: 0;
+}
+
+.mobile-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 2px solid #e94560;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.mobile-nav-header h3 {
+    color: #fff;
+    margin: 0;
+    font-size: 20px;
+}
+
+.mobile-nav-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.mobile-nav-close:hover {
+    transform: rotate(90deg);
+}
+
+.mobile-nav-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+}
+
+.mobile-nav-item {
+    display: block;
+    padding: 18px 20px;
+    color: #aaa;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mobile-nav-item:hover {
+    color: #fff;
+    background: rgba(233, 69, 96, 0.2);
+    border-left: 4px solid #e94560;
+    padding-left: 16px;
+}
+
+/* Mobile NAV Overlay */
+.mobile-nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    z-index: 1000;
+    display: none;
+    transition: background 0.3s ease;
+}
+
+.mobile-nav-overlay.active {
+    display: block;
+    background: rgba(0, 0, 0, 0.7);
 }
 
 /* Scrollbar */
@@ -1078,6 +1197,11 @@ select {
         border-radius: 0;
     }
 
+    /* Show mobile menu button on mobile devices */
+    .mobile-menu-btn {
+        display: block;
+    }
+
     .game-header {
         padding: 12px 15px;
         min-height: 60px;
@@ -1085,7 +1209,7 @@ select {
     }
 
     .game-title {
-        font-size: 18px;
+        display: none;
     }
 
     .player-stats {
@@ -1870,7 +1994,8 @@ select {
     background: url('../Hinh/brTrangChu.gif') center/cover no-repeat;
     display: none;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
+    overflow: hidden;
 }
 
 .card-selection-page.active {
@@ -1942,6 +2067,10 @@ select {
     border: 2px solid #667eea;
     border-radius: 15px;
     padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 /* Rarity Filter Tabs */
@@ -2023,14 +2152,15 @@ select {
 }
 
 .selection-grid-scroll {
-    max-height: calc(100vh - 320px);
+    flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     padding: 10px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 10px;
     border: 1px solid rgba(102, 126, 234, 0.3);
+    min-height: 200px;
 }
 
 .selection-grid-scroll::-webkit-scrollbar {
@@ -2131,6 +2261,7 @@ select {
     gap: 15px;
     justify-content: center;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .selection-btn {
@@ -2459,13 +2590,22 @@ select {
     }
 }
 
+/* Battle Bottom Section - Player Deck + Actions */
+.battle-bottom-section {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-shrink: 0;
+    align-items: flex-start;
+}
+
 .player-deck {
     margin-bottom: 0;
     padding: 10px;
     background: rgba(102, 126, 234, 0.3) !important;
     border-radius: 10px;
     border: 3px solid #FFD700 !important;
-    flex-shrink: 0;
+    flex: 1;
     min-height: auto;
 }
 
@@ -2585,28 +2725,31 @@ select {
 
 .battle-actions {
     display: flex;
+    flex-direction: column;
     gap: 6px;
-    justify-content: center;
-    flex-wrap: wrap;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
     padding: 8px;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
     border-radius: 10px;
     margin-top: 0;
     border: 1px solid rgba(102, 126, 234, 0.4);
     flex-shrink: 0;
+    min-width: 100px;
 }
 
 .action-btn {
-    padding: 8px 16px;
+    padding: 10px 12px;
     border: none;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
     color: #fff;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    margin: 2px;
+    margin: 0;
+    white-space: nowrap;
 }
 
 .action-btn:disabled {
@@ -4144,34 +4287,38 @@ select {
     /* Battle Page Overall */
     .battle-page {
         padding: 0;
+        flex: 1;
+        overflow: hidden;
     }
 
     .battle-top {
-        padding: 10px 15px;
+        padding: 8px 12px;
         min-height: auto;
-        gap: 10px;
+        gap: 8px;
+        flex-shrink: 0;
     }
 
     .battle-top h2 {
-        font-size: 16px;
+        font-size: 14px;
         flex: 1;
     }
 
     .exit-battle-btn {
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 6px 10px;
+        font-size: 11px;
     }
 
     /* Battle Toolbar - Hide label on mobile */
     .battle-toolbar {
-        padding: 10px;
-        margin: 8px 0;
-        gap: 8px;
+        padding: 6px;
+        margin: 4px 0;
+        gap: 6px;
+        flex-shrink: 0;
     }
 
     .type-advantage-btn {
-        padding: 8px 14px;
-        font-size: 12px;
+        padding: 6px 10px;
+        font-size: 11px;
     }
 
     .type-advantage-label {
@@ -4180,79 +4327,92 @@ select {
 
     /* Battle Main Container */
     .battle-main {
-        padding: 8px;
-        gap: 10px;
+        padding: 6px;
+        gap: 6px;
         overflow-y: auto;
+        flex: 1;
     }
 
     /* Player Deck - Optimize for vertical space */
     .player-deck {
-        padding: 8px;
-        margin-bottom: 8px;
+        padding: 6px;
+        margin-bottom: 0;
         min-height: auto;
+        flex: 1;
     }
 
     .player-deck h4 {
-        margin: 0 0 6px 0;
-        font-size: 11px;
+        margin: 0 0 4px 0;
+        font-size: 10px;
     }
 
     .deck-scroll-container {
-        max-height: 110px;
-        padding: 6px 4px;
+        max-height: 85px;
+        padding: 4px 2px;
     }
 
     .deck-grid {
         grid-template-columns: repeat(5, 1fr);
-        gap: 4px;
-        min-height: 90px;
+        gap: 3px;
+        min-height: 70px;
     }
 
     .deck-card {
-        padding: 6px;
-        border-radius: 6px;
+        padding: 4px;
+        border-radius: 5px;
     }
 
     .deck-card-emoji {
-        font-size: 24px;
+        font-size: 20px;
         margin-bottom: 1px;
     }
 
     .deck-card-name {
-        font-size: 8px;
-        margin-bottom: 1px;
+        font-size: 7px;
+        margin-bottom: 0px;
     }
 
     .deck-card-hp {
-        font-size: 7px;
+        font-size: 6px;
+    }
+
+    /* Battle Bottom Section - Side layout */
+    .battle-bottom-section {
+        flex-direction: row;
+        gap: 6px;
     }
 
     /* Action Buttons */
     .battle-actions {
-        padding: 8px;
-        gap: 4px;
+        padding: 6px;
+        gap: 3px;
         margin: 0;
+        flex-shrink: 0;
+        flex-direction: column;
+        min-width: 75px;
     }
 
     .action-btn {
-        padding: 8px 12px;
-        font-size: 11px;
-        margin: 2px;
-        flex: 1;
-        min-width: 140px;
+        padding: 6px 8px;
+        font-size: 9px;
+        margin: 0;
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .confirm-btn {
-        font-size: 11px;
+        font-size: 9px;
+        padding: 6px 8px;
     }
 
     /* Battle Container */
     .battle-container {
         grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 8px;
+        gap: 6px;
+        padding: 6px;
         margin: 0;
-        border-radius: 12px;
+        border-radius: 10px;
+        flex-shrink: 0;
     }
 
     .battle-vs {
@@ -4260,78 +4420,79 @@ select {
     }
 
     .battle-side {
-        gap: 6px;
+        gap: 4px;
     }
 
     .battle-side h3 {
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .battle-deck-info {
-        font-size: 10px;
+        font-size: 9px;
     }
 
     .battle-field {
         min-width: 100%;
-        padding: 8px;
-        border-radius: 10px;
+        padding: 6px;
+        border-radius: 8px;
     }
 
     .card-placeholder {
-        min-width: 100px;
-        padding: 8px;
-        border-radius: 8px;
+        min-width: 90px;
+        padding: 6px;
+        border-radius: 6px;
     }
 
     .card-placeholder div:nth-child(2) {
         /* Card emoji */
-        font-size: 32px;
-        margin-bottom: 2px;
-    }
-
-    .habitat-badge {
-        width: 24px;
-        height: 24px;
-        font-size: 14px;
-        top: 3px;
-        right: 3px;
-    }
-
-    .card-name {
-        font-size: 10px;
+        font-size: 28px;
         margin-bottom: 1px;
     }
 
-    .card-stats {
+    .habitat-badge {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        top: 2px;
+        right: 2px;
+    }
+
+    .card-name {
         font-size: 9px;
+        margin-bottom: 0px;
+    }
+
+    .card-stats {
+        font-size: 8px;
     }
 
     .battle-health-bar {
-        height: 16px;
-        border-radius: 6px;
+        height: 14px;
+        border-radius: 5px;
     }
 
     .health-text {
-        font-size: 10px;
+        font-size: 9px;
     }
 
     /* Battle Info */
     .battle-info {
-        padding: 10px;
-        gap: 10px;
-        border-radius: 10px;
+        padding: 6px;
+        gap: 6px;
+        border-radius: 8px;
         flex-direction: column;
         align-items: stretch;
+        flex-shrink: 0;
     }
 
     .turn-info {
         margin-bottom: 0;
-        padding: 8px;
+        padding: 6px;
         text-align: center;
     }
 
     .turn-info h3 {
-        font-size: 12px;
+        font-size: 11px;
     }
 }
 
@@ -4926,8 +5087,13 @@ select {
         gap: 18px;
     }
 
+    .battle-bottom-section {
+        gap: 15px;
+    }
+
     .player-deck {
         padding: 12px;
+        flex: 1;
     }
 
     .player-deck h4 {
@@ -5134,5 +5300,208 @@ select {
     .selection-btn {
         padding: 10px 14px;
         font-size: 12px;
+    }
+}
+
+/* ==================== BOSS BATTLES & DECK PRESETS ==================== */
+
+/* Boss Badge */
+.boss-badge {
+    background: linear-gradient(90deg, #ff6b6b 0%, #feca57 100%);
+    color: #000;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    animation: bossPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes bossPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 107, 107, 0.8);
+    }
+}
+
+/* Deck Presets Section */
+.deck-presets-section {
+    background: rgba(102, 126, 234, 0.1);
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.deck-presets-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.deck-presets-header h4 {
+    color: #667eea;
+    font-size: 14px;
+    margin: 0;
+}
+
+.btn-save-preset {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-save-preset:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.deck-presets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.preset-item {
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid rgba(102, 126, 234, 0.4);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.preset-item:hover {
+    background: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.preset-info {
+    flex: 1;
+}
+
+.preset-name {
+    color: #fff;
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 3px;
+}
+
+.preset-cards {
+    color: #aaa;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preset-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: 10px;
+}
+
+.btn-load-preset,
+.btn-delete-preset {
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-load-preset {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+}
+
+.btn-load-preset:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-delete-preset {
+    background: rgba(233, 69, 96, 0.3);
+    color: #e94560;
+    border: 1px solid #e94560;
+}
+
+.btn-delete-preset:hover {
+    background: rgba(233, 69, 96, 0.5);
+    transform: translateY(-2px);
+}
+
+.empty-preset {
+    color: #aaa;
+    font-size: 12px;
+    text-align: center;
+    padding: 10px;
+    font-style: italic;
+}
+
+/* Mobile Deck Presets */
+@media (max-width: 600px) {
+    .deck-presets-section {
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+
+    .deck-presets-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .btn-save-preset {
+        padding: 5px 10px;
+        font-size: 11px;
+        width: 100%;
+    }
+
+    .preset-item {
+        padding: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .preset-actions {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 8px;
+    }
+
+    .btn-load-preset,
+    .btn-delete-preset {
+        flex: 1;
+        padding: 5px 8px;
+        font-size: 11px;
+    }
+}
+
+/* Mobile Battle Screen - Hide Navigation Bar and Optimize Layout */
+@media (max-width: 768px) {
+    .page.active[data-page="battle"] {
+        position: relative;
+    }
+    
+    /* Adjust game-content to use full height when battle is active */
+    .game-content {
+        padding-bottom: 0 !important;
     }
 }
