@@ -242,6 +242,7 @@
                 <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('main')">🏠 Trang Chính</a>
                 <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('quest')">✓ Thành Tựu</a>
                 <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('collection')">📚 Bộ Sưu Tập</a>
+                <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('fusion')">⚡ Nâng Cấp</a>
                 <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('shop')">🛍️ Cửa Hàng</a>
                 <a class="mobile-nav-item" onclick="switchPageAndCloseMenu('settings')">⚙️ Cài Đặt</a>
             </nav>
@@ -328,6 +329,27 @@
                 <!-- Lưới thẻ -->
                 <div class="collection-cards-grid" id="collectionGrid">
                     <!-- Thẻ sẽ được tạo bằng JavaScript -->
+                </div>
+            </div>
+
+            <!-- Trang Nâng Cấp Thẻ -->
+            <div class="page fusion-page" data-page="fusion">
+                <div class="fusion-header">
+                    <button class="fusion-back-btn" onclick="switchPage('collection')">🔙</button>
+                    <h2>⚡ Nâng Cấp Thẻ</h2>
+                    <div style="width: 40px;"></div>
+                </div>
+
+                <div class="fusion-container">
+                    <div class="fusion-tabs">
+                        <button class="fusion-tab active" onclick="switchFusionTab('all')">📋 Tất Cả</button>
+                        <button class="fusion-tab" onclick="switchFusionTab('upgradeable')">⭐ Có Thể Nâng</button>
+                        <button class="fusion-tab" onclick="switchFusionTab('owned')">✨ Đã Sở Hữu</button>
+                    </div>
+
+                    <div class="fusion-grid" id="fusionGrid">
+                        <!-- Thẻ sẽ được tạo bằng JavaScript -->
+                    </div>
                 </div>
             </div>
 
@@ -581,6 +603,7 @@
                     </div>
                 </div>
         </div>
+        </div>
 
         <!-- Navigation Bar -->
         <div class="game-nav">
@@ -595,6 +618,10 @@
             <div class="nav-item" onclick="switchPage('collection')">
                 <div class="nav-icon">📚</div>
                 <div class="nav-label">Bộ Sưu Tập</div>
+            </div>
+            <div class="nav-item" onclick="switchPage('fusion')">
+                <div class="nav-icon">⚡</div>
+                <div class="nav-label">Nâng Cấp</div>
             </div>
             <div class="nav-item" onclick="switchPage('shop')">
                 <div class="nav-icon">🛍️</div>
@@ -793,14 +820,17 @@
         }
 
         // Hiển thị modal gacha
-        function showGachaModal(uniqueCards, totalRefund) {
+        function showGachaModal(allPulledCards, duplicateCount) {
             const modal = document.getElementById('gacha-modal');
             const resultsDiv = document.getElementById('gacha-results');
             let htmlContent = '';
+            
+            const newCards = allPulledCards.filter(c => c.isNew);
+            const duplicateCards = allPulledCards.filter(c => !c.isNew);
 
-            if (uniqueCards.length > 0) {
-                htmlContent += '<div class="gacha-new-cards"><h3>🎁 Thẻ Mới Nhận Được:</h3>';
-                uniqueCards.forEach(card => {
+            if (newCards.length > 0) {
+                htmlContent += '<div class="gacha-new-cards"><h3>🎉 Thẻ Mới Lần Đầu:</h3>';
+                newCards.forEach(card => {
                     const rarityName = {
                         'common': '⚪ Trắng',
                         'rare': '🟢 Xanh Lá',
@@ -823,17 +853,17 @@
                 htmlContent += '</div>';
             }
 
-            if (totalRefund > 0) {
+            if (duplicateCount > 0) {
                 htmlContent += `
-                    <div class="gacha-refund">
-                        <div class="refund-icon">💰</div>
-                        <div class="refund-text">Nhận hoàn tiền: <strong>${totalRefund} vàng</strong> (từ thẻ trùng)</div>
+                    <div class="gacha-duplicates">
+                        <div class="duplicate-icon">⭐</div>
+                        <div class="duplicate-text">Bạn nhận được <strong>${duplicateCount}</strong> bản sao để nâng cấp thẻ</div>
                     </div>
                 `;
             }
 
-            if (uniqueCards.length === 0 && totalRefund === 0) {
-                htmlContent += '<div class="gacha-no-result">❌ Không có thẻ mới hoặc tiền hoàn</div>';
+            if (newCards.length === 0 && duplicateCount === 0) {
+                htmlContent += '<div class="gacha-no-result">❌ Không có thẻ mới</div>';
             }
 
             resultsDiv.innerHTML = htmlContent;
@@ -937,6 +967,124 @@
             card.currentHp = card.hp;
         });
 
+        // === HỆ THỐNG NÂNG CẤP THẺ ===
+        let allCardLevels = {};
+        let cardInventory = {}; // Tổng số lượng từng thẻ sở hữu {"Rồng": 3, "Mèo": 1, ...}
+        let cardDuplicates = {}; // Số bản sao khả dụng để nâng cấp (không dùng cho tìm kiếm)
+
+        // Hàm khởi tạo level system
+        function initializeCardLevels() {
+            // Tạo object lưu level cho mỗi thẻ (chỉ khởi tạo những thẻ chưa có level)
+            allCards.forEach(card => {
+                if (!allCardLevels[card.name]) {
+                    allCardLevels[card.name] = 1;
+                }
+            });
+            // Gọi updateDuplicateCount sau init để khởi tạo inventory cho cards sở hữu
+            // KHÔNG khởi tạo inventory ở đây - để loadProgress() + updateDuplicateCount() xử lý
+            updateDuplicateCount();
+            console.log('📊 Card levels initialized:', Object.keys(allCardLevels).length);
+        }
+
+        // Hàm tính số bản sao khả dụng (cardInventory - 1 nếu owned)
+        function updateDuplicateCount() {
+            cardDuplicates = {};
+            
+            // Bước 1: Khởi tạo cardInventory cho tất cả cards sở hữu
+            allCards.forEach(card => {
+                if (card.owned && !cardInventory[card.name]) {
+                    // Nếu card đã sở hữu nhưng không có trong inventory, set = 1
+                    cardInventory[card.name] = 1;
+                }
+            });
+            
+            // Bước 2: Tính cardDuplicates từ cardInventory
+            Object.keys(cardInventory).forEach(cardName => {
+                if (cardInventory[cardName] > 0) {
+                    // Số bản sao = tổng số lượng - 1 (cái đang giữ)
+                    cardDuplicates[cardName] = Math.max(0, cardInventory[cardName] - 1);
+                }
+            });
+            console.log('📦 cardInventory:', cardInventory);
+            console.log('📦 cardDuplicates:', cardDuplicates);
+        }
+
+        // Hàm lấy chỉ số được nâng cấp của thẻ (theo sao)
+        function getUpgradedStats(cardName) {
+            const card = allCards.find(c => c.name === cardName);
+            const stars = allCardLevels[cardName] || 1; // Sử dụng allCardLevels để lưu số sao
+            if (!card) return null;
+
+            // Tỷ lệ tăng chỉ số theo số sao
+            let scaleFactor;
+            switch(stars) {
+                case 1: scaleFactor = 1.0; break;    // 1 sao: chỉ số gốc
+                case 2: scaleFactor = 2.0; break;    // 2 sao: gấp 2 lần
+                case 3: scaleFactor = 3.5; break;    // 3 sao: gấp 3.5 lần
+                default: scaleFactor = 1.0;
+            }
+            
+            return {
+                atk: Math.round(card.atk * scaleFactor),
+                hp: Math.round(card.maxHp * scaleFactor),
+                level: stars
+            };
+        }
+
+        // Hàm lấy số bản sao cần để nâng cấp lên sao tiếp theo
+        function getUpgradeCost(currentStars) {
+            // currentStars: số sao hiện tại
+            // Trả về chi phí để nâng lên sao tiếp theo
+            const costs = {
+                1: 3,   // 1 sao -> 2 sao: cần 3 bản sao
+                2: 9    // 2 sao -> 3 sao: cần 9 bản sao
+            };
+            return costs[currentStars] || 0; // Nếu đã 3 sao hoặc lớn hơn, trả 0
+        }
+
+        // Hàm lấy hệ số lực chiến theo số sao
+        function getStarMultiplier(cardName) {
+            const stars = allCardLevels[cardName] || 1;
+            switch(stars) {
+                case 1: return 1.0;    // 1⭐: lực chiến gốc
+                case 2: return 2.0;    // 2⭐: gấp 2 lần
+                case 3: return 4.0;    // 3⭐: gấp 4 lần (gấp 2 lần từ 2⭐)
+                default: return 1.0;
+            }
+        }
+
+        // Hàm nâng cấp thẻ (nâng sao)
+        function upgradeCard(cardName) {
+            const card = allCards.find(c => c.name === cardName);
+            if (!card || !card.owned) return false;
+
+            const currentStars = allCardLevels[cardName] || 1;
+            
+            // Kiểm tra đã đạt 3 sao chưa
+            if (currentStars >= 3) {
+                alert(`⭐ ${cardName} đã đạt mức tối đa (3 sao)!`);
+                return false;
+            }
+
+            const cost = getUpgradeCost(currentStars);
+            const duplicates = cardDuplicates[cardName] || 0;
+
+            if (duplicates < cost) {
+                alert(`❌ Cần ${cost} bản ${cardName}, hiện có ${duplicates}`);
+                return false;
+            }
+
+            // Giảm số lượng từ inventory
+            cardInventory[cardName] -= cost;
+
+            // Tăng sao
+            allCardLevels[cardName]++;
+            updateDuplicateCount();
+            saveProgress();
+
+            return true;
+        }
+
         // Biến toàn cục
         let currentRarity = 'common';
         let showOwnedOnly = true;
@@ -954,7 +1102,11 @@
             
             playerPower = allCards
                 .filter(card => card.owned)
-                .reduce((total, card) => total + (powerPerCard[card.rarity] || 0), 0);
+                .reduce((total, card) => {
+                    const basePower = powerPerCard[card.rarity] || 0;
+                    const starMultiplier = getStarMultiplier(card.name);
+                    return total + (basePower * starMultiplier);
+                }, 0);
             
             return playerPower;
         }
@@ -998,13 +1150,18 @@
             };
             
             Object.keys(powerPerCard).forEach(rarity => {
-                const ownedCount = allCards.filter(c => c.owned && c.rarity === rarity).length;
-                const totalPower = ownedCount * powerPerCard[rarity];
-                if (ownedCount > 0 || totalPower > 0) {
+                const cardsOfRarity = allCards.filter(c => c.owned && c.rarity === rarity);
+                const totalPower = cardsOfRarity.reduce((sum, card) => {
+                    const basePower = powerPerCard[rarity];
+                    const starMultiplier = getStarMultiplier(card.name);
+                    return sum + (basePower * starMultiplier);
+                }, 0);
+                
+                if (cardsOfRarity.length > 0) {
                     detailsHtml += `
                         <div class="power-detail-item">
                             <span class="power-detail-rarity">${rarityNames[rarity]}</span>
-                            <span class="power-detail-calc">${ownedCount} x ${powerPerCard[rarity]} = <strong>${totalPower}</strong></span>
+                            <span class="power-detail-calc">${cardsOfRarity.length} thẻ = <strong>${totalPower}</strong></span>
                         </div>
                     `;
                 }
@@ -1729,6 +1886,12 @@
             const typeIcon = card.type === 'carnivore' ? '🍖' : (card.type === 'herbivore' ? '🌿' : '🥘');
             const habitatIcon = card.habitat === 'land' ? '🏜️' : (card.habitat === 'water' ? '🌊' : '🌤️');
             
+            // Lấy chỉ số nâng cấp
+            const stats = getUpgradedStats(card.name);
+            const displayAtk = stats.atk;
+            const displayHp = stats.hp;
+            const cardStars = stats.level; // Sử dụng 'level' field để lưu số sao
+            
             return `
                 <div class="animal-card ${card.rarity} ${ownedClass}">
                     <div class="card-header">
@@ -1739,9 +1902,10 @@
                         <div style="font-size: 100px; text-align: center; padding: 20px;">${card.emoji}</div>
                     </div>
                     <div class="card-name">${card.name}</div>
+                    ${cardStars > 1 ? `<div class="card-stars" style="text-align: center; font-size: 14px; margin: 4px 0;">⭐ ${'⭐'.repeat(cardStars - 1)}</div>` : ''}
                     <div class="card-stats">
-                        <div class="stat attack">⚔️ ${card.atk}</div>
-                        <div class="stat health">❤️ ${card.hp}</div>
+                        <div class="stat attack">⚔️ ${displayAtk}</div>
+                        <div class="stat health">❤️ ${displayHp}</div>
                     </div>
                 </div>
             `;
@@ -1791,6 +1955,118 @@
             
             renderCards();
         }
+
+        // === FUSION/UPGRADE SYSTEM ===
+        let currentFusionTab = 'all';
+
+        function switchFusionTab(tab) {
+            currentFusionTab = tab;
+            
+            // Update tab active state
+            document.querySelectorAll('.fusion-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[onclick="switchFusionTab('${tab}')"]`).classList.add('active');
+            
+            renderFusionGrid();
+        }
+
+        function renderFusionGrid() {
+            const grid = document.getElementById('fusionGrid');
+            grid.innerHTML = '';
+
+            let cardsToDisplay = [];
+
+            if (currentFusionTab === 'all') {
+                cardsToDisplay = allCards;
+            } else if (currentFusionTab === 'owned') {
+                cardsToDisplay = allCards.filter(card => card.owned);
+            } else if (currentFusionTab === 'upgradeable') {
+                cardsToDisplay = allCards.filter(card => {
+                    const currentStars = allCardLevels[card.name] || 1;
+                    // Kiểm tra có thể nâng sao không (max 3 sao)
+                    if (currentStars >= 3) return false;
+                    const cost = getUpgradeCost(currentStars);
+                    return cardDuplicates[card.name] && cardDuplicates[card.name] >= cost;
+                });
+            }
+
+            if (cardsToDisplay.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #aaa; padding: 20px;">Không có thẻ nào</div>';
+                return;
+            }
+
+            cardsToDisplay.forEach(card => {
+                const stars = allCardLevels[card.name] || 1;
+                const stats = getUpgradedStats(card.name);
+                const duplicates = cardDuplicates[card.name] || 0;
+                const currentStars = allCardLevels[card.name] || 1;
+                let cost = 0;
+                let canUpgrade = false;
+                
+                // Tính chi phí nâng sao tiếp theo
+                if (currentStars < 3) {
+                    cost = getUpgradeCost(currentStars);
+                    canUpgrade = duplicates >= cost;
+                }
+
+                const cardEl = document.createElement('div');
+                cardEl.className = 'fusion-card';
+
+                const rarityColor = {
+                    'common': '#808080',
+                    'rare': '#22c55e',
+                    'super-rare': '#0ea5e9',
+                    'ultra-rare': '#a855f7',
+                    'legendary': '#f97316'
+                }[card.rarity];
+
+                cardEl.innerHTML = `
+                    <div class="fusion-card-content" style="border-top: 3px solid ${rarityColor};">
+                        <div class="fusion-card-emoji">${card.emoji}</div>
+                        <div class="fusion-card-level">⭐ ${'⭐'.repeat(stars)}</div>
+                        <div class="fusion-card-name">${card.name}</div>
+                        <div class="fusion-card-stats">
+                            <div>⚔️ ${stats.atk}</div>
+                            <div>❤️ ${stats.hp}</div>
+                        </div>
+                        <div class="fusion-card-duplicates">
+                            <span class="dup-badge" style="background: ${canUpgrade ? '#22c55e' : '#666'};">
+                                📋 ${duplicates}/${cost > 0 ? cost : '-'}
+                            </span>
+                        </div>
+                        <button class="fusion-upgrade-btn ${canUpgrade ? '' : 'disabled'}" 
+                                onclick="upgradeCardUI('${card.name}')" 
+                                ${canUpgrade ? '' : 'disabled'}>
+                            ${currentStars >= 3 ? '✅ Max' : canUpgrade ? '⚡ Nâng' : '❌ Chưa Đủ'}
+                        </button>
+                    </div>
+                `;
+
+                grid.appendChild(cardEl);
+            });
+        }
+
+        function upgradeCardUI(cardName) {
+            const card = allCards.find(c => c.name === cardName);
+            if (!card) return;
+
+            const currentStars = allCardLevels[cardName] || 1;
+            const cost = getUpgradeCost(currentStars);
+
+            if (upgradeCard(cardName)) {
+                const newStars = allCardLevels[cardName];
+                const newStats = getUpgradedStats(cardName);
+                
+                alert(`⚡ ${cardName} nâng cấp thành công!\n ⭐ ${currentStars} → ⭐ ${newStars}\n⚔️ ${card.atk} → ${newStats.atk}\n❤️ ${card.maxHp} → ${newStats.hp}`);
+                
+                // Auto refresh page after 1.5 seconds to save and reload data
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            }
+        }
+
 
         // Mobile Menu Functions
         function toggleMobileMenu() {
@@ -1850,6 +2126,9 @@
                 generateLevels();
             } else if (pageName === 'collection') {
                 renderCards();
+            } else if (pageName === 'fusion') {
+                updateDuplicateCount();
+                renderFusionGrid();
             } else if (pageName === 'shop') {
                 initShopButtons();
             } else if (pageName === 'settings') {
@@ -2001,7 +2280,7 @@
                     levelStars = gameState.levelStars || {};
                     // Preserve all other achievement tracking data
                     Object.keys(gameState).forEach(key => {
-                        if (!['playerMoney', 'playerDiamond', 'cards', 'completedLevels', 'levelStars'].includes(key)) {
+                        if (!['playerMoney', 'playerDiamond', 'cards', 'completedLevels', 'levelStars', 'cardLevels', 'cardInventory'].includes(key)) {
                             additionalData[key] = gameState[key];
                         }
                     });
@@ -2015,12 +2294,14 @@
                     name: card.name,
                     owned: card.owned
                 })),
+                cardLevels: allCardLevels,
+                cardInventory: cardInventory,
                 completedLevels: completedLevels,
                 levelStars: levelStars,
                 ...additionalData
             };
             localStorage.setItem('gameProgress', JSON.stringify(gameState));
-            console.log('💾 Saved progress');
+            console.log('💾 Saved progress with cardLevels:', Object.keys(allCardLevels).length, 'cards, cardInventory:', Object.keys(cardInventory).length);
         }
 
         // Tải tiến trình từ localStorage
@@ -2041,8 +2322,19 @@
                             }
                         });
                     }
+
+                    // Cập nhật levels
+                    if (gameState.cardLevels) {
+                        allCardLevels = gameState.cardLevels;
+                    }
                     
-                    console.log('📊 Loaded from localStorage - Money:', playerMoney, 'Diamonds:', playerDiamond, 'Cards:', gameState.cards?.length || 0);
+                    // Cập nhật inventory (số lượng bản sao)
+                    if (gameState.cardInventory) {
+                        cardInventory = gameState.cardInventory;
+                    }
+                    
+                    console.log('📊 Loaded from localStorage - Money:', playerMoney, 'Diamonds:', playerDiamond, 'Inventory:', cardInventory);
+                    updateDuplicateCount();
                     updateMoney();
                     updateDiamond();
                     updatePowerDisplay();
@@ -2064,6 +2356,14 @@
                 allCards.forEach(card => {
                     card.owned = false;
                 });
+
+                // Reset card levels
+                allCardLevels = {};
+                cardInventory = {};
+                allCards.forEach(card => {
+                    allCardLevels[card.name] = 1;
+                    cardInventory[card.name] = 0;
+                });
                 
                 // Reset playerMoney
                 playerMoney = 5000;
@@ -2077,6 +2377,8 @@
                         name: card.name,
                         owned: false
                     })),
+                    cardLevels: allCardLevels,
+                    cardInventory: cardInventory,
                     completedLevels: [],
                     levelStars: {}
                 };
@@ -2348,12 +2650,19 @@
                     'legendary': 'Cam'
                 }[card.rarity];
 
+                // Lấy stats nâng cấp (có tính sao)
+                const upgradedStats = getUpgradedStats(card.name);
+                const displayStars = upgradedStats.level;
+                const displayAtk = upgradedStats.atk;
+                const displayHp = upgradedStats.hp;
+
                 cardEl.innerHTML = `
                     <div class="selection-card-emoji">${card.emoji}</div>
                     <div class="selection-card-name">${card.name}</div>
+                    ${displayStars > 1 ? `<div class="selection-card-level">⭐ ${'⭐'.repeat(displayStars)}</div>` : ''}
                     <div class="selection-card-stats">
-                        <span>⚔️${card.atk}</span>
-                        <span>❤️${card.hp}</span>
+                        <span>⚔️${displayAtk}</span>
+                        <span>❤️${displayHp}</span>
                     </div>
                     <div class="selection-card-rarity">${rarityName}</div>
                 `;
@@ -3020,9 +3329,12 @@
                 gameState.cards = allCards.map(card => ({
                     name: card.name,
                     owned: card.owned
-                }));                
+                }));
+                // Lưu cardLevels và cardInventory để không bị mất khi reload
+                gameState.cardLevels = allCardLevels;
+                gameState.cardInventory = cardInventory;
                 localStorage.setItem('gameProgress', JSON.stringify(gameState));
-                console.log('💾 Saved to localStorage - Level:', battleState.currentLevel, 'Completed levels:', gameState.completedLevels);
+                console.log('💾 Saved to localStorage - Level:', battleState.currentLevel, 'Completed levels:', gameState.completedLevels, 'CardLevels:', Object.keys(allCardLevels).length);
                 
                 // Only add gold/diamonds if first completion
                 if (isFirstCompletion) {
@@ -3105,14 +3417,6 @@
                     { rarity: 'legendary', percent: 0.50 }
                 ]
             }
-        };
-
-        const refundTable = {
-            common: 5,
-            rare: 10,
-            'super-rare': 100,
-            'ultra-rare': 300,
-            legendary: 500
         };
 
         // Chọn loại rương
@@ -3223,8 +3527,8 @@
 
         // Hiển thị kết quả pull
         function showPullResult(cards) {
-            const uniqueCards = [];
-            let totalRefund = 0;
+            const allResults = [];  // Danh sách tất cả thẻ với flag isNew
+            let duplicateCount = 0;
             let hasLegendary = false;
 
             cards.forEach(card => {
@@ -3232,19 +3536,25 @@
                     hasLegendary = true;
                 }
                 
-                if (card.owned) {
-                    // Thẻ đã có → hoàn tiền
-                    totalRefund += refundTable[card.rarity];
-                } else {
-                    // Thẻ chưa có → thêm vào bộ sưu tập
+                const isNew = !card.owned;
+                
+                // Thêm vào cardInventory (lần đầu hoặc bản sao)
+                if (!cardInventory[card.name]) {
+                    cardInventory[card.name] = 0;
+                }
+                cardInventory[card.name]++;
+                console.log(`📦 ${card.name}: inventory = ${cardInventory[card.name]} (isNew: ${isNew})`);
+                
+                // Set owned nếu lần đầu
+                if (isNew) {
                     card.owned = true;
-                    uniqueCards.push(card);
+                    allResults.push({...card, isNew: true});
+                } else {
+                    // Đã có → đây là bản sao
+                    duplicateCount++;
+                    allResults.push({...card, isNew: false});
                 }
             });
-
-            if (totalRefund > 0) {
-                playerMoney += totalRefund;
-            }
 
             // Track legendary pull for achievement
             if (hasLegendary) {
@@ -3254,8 +3564,12 @@
                 localStorage.setItem('gameProgress', JSON.stringify(gameState));
             }
 
+            // Cập nhật cardDuplicates để tính số bản sao khả dụng
+            updateDuplicateCount();
+            console.log('📋 cardDuplicates:', cardDuplicates);
+
             // Hiển thị modal popup
-            showGachaModal(uniqueCards, totalRefund);
+            showGachaModal(allResults, duplicateCount);
             renderCards();
             updateMoney();
             saveProgress();
@@ -3285,6 +3599,7 @@
         // Khởi tạo khi trang load
         document.addEventListener('DOMContentLoaded', function() {
             loadProgress();
+            initializeCardLevels();
             generateLevels();
             initToggleSwitches();
             initShopButtons();

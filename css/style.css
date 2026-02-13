@@ -459,6 +459,20 @@ body {
     border-color: #87ceeb;
 }
 
+.card-level-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #333;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+    z-index: 5;
+}
+
 /* Hình ảnh thẻ */
 .card-image {
     flex: 1;
@@ -1803,28 +1817,28 @@ select {
     font-size: 12px;
 }
 
-.gacha-refund {
+.gacha-duplicates {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: rgba(76, 175, 80, 0.15);
-    border: 2px solid #4caf50;
+    background: rgba(255, 193, 7, 0.15);
+    border: 2px solid #ffc107;
     border-radius: 12px;
     padding: 15px;
     margin-top: 15px;
 }
 
-.refund-icon {
+.duplicate-icon {
     font-size: 32px;
 }
 
-.refund-text {
+.duplicate-text {
     color: #fff;
     font-size: 14px;
 }
 
-.refund-text strong {
-    color: #4caf50;
+.duplicate-text strong {
+    color: #ffc107;
     font-size: 16px;
 }
 
@@ -5503,5 +5517,233 @@ select {
     /* Adjust game-content to use full height when battle is active */
     .game-content {
         padding-bottom: 0 !important;
+    }
+}
+
+/* === FUSION PAGE STYLES === */
+.fusion-page {
+    display: none;
+    flex-direction: column;
+    padding: 0;
+    height: 100%;
+}
+
+.fusion-page.active {
+    display: flex !important;
+}
+
+.fusion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.fusion-back-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.fusion-back-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.fusion-header h2 {
+    margin: 0;
+    font-size: 22px;
+    flex: 1;
+    text-align: center;
+}
+
+.fusion-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding: 15px 20px;
+    gap: 15px;
+}
+
+.fusion-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fusion-tab {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.fusion-tab:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.fusion-tab.active {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #333;
+    border-color: #ffd700;
+}
+
+.fusion-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 15px;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.fusion-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.fusion-grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.fusion-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+.fusion-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.fusion-card {
+    background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+    border-radius: 12px;
+    padding: 12px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.fusion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+    border-color: rgba(255, 215, 0, 0.6);
+}
+
+.fusion-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+}
+
+.fusion-card-header > div:first-child {
+    font-size: 35px;
+}
+
+.fusion-card-name {
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.fusion-card-rarity {
+    font-size: 12px;
+    color: #ffd700;
+}
+
+.fusion-card-level {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.fusion-card-stats {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    color: #aaa;
+    width: 100%;
+    justify-content: center;
+}
+
+.fusion-card-duplicates {
+    font-size: 11px;
+    color: #888;
+    margin-top: 5px;
+}
+
+.fusion-upgrade-btn {
+    width: 100%;
+    padding: 6px 8px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #333;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+.fusion-upgrade-btn:hover:not(.disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.fusion-upgrade-btn.disabled {
+    background: rgba(128, 128, 128, 0.5);
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+    .fusion-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 10px;
+    }
+    
+    .fusion-card {
+        padding: 10px;
+    }
+    
+    .fusion-header {
+        padding: 12px 15px;
+    }
+    
+    .fusion-header h2 {
+        font-size: 18px;
     }
 }
