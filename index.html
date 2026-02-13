@@ -1322,16 +1322,14 @@
             const name = prompt('📝 Nhập tên bộ bài:');
             if (name === null) return;
 
-            const selectedCards = document.querySelectorAll('.selection-card.selected');
-            if (selectedCards.length !== 5) {
+            // Check the selectedCardsForBattle array instead of DOM elements
+            // This works correctly even when cards are filtered
+            if (selectedCardsForBattle.length !== 5) {
                 alert('❌ Vui lòng chọn đủ 5 thẻ!');
                 return;
             }
 
-            const cards = Array.from(selectedCards).map(el => {
-                const cardName = el.querySelector('.selection-card-name').textContent;
-                return allCards.find(c => c.name === cardName);
-            });
+            const cards = selectedCardsForBattle;
 
             if (saveDeckPreset(name, cards)) {
                 alert(`✅ Bộ bài "${name}" đã được lưu!`);
