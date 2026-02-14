@@ -3310,7 +3310,7 @@
                     gameState.maxLevelCompleted = Math.max(gameState.maxLevelCompleted || 0, battleState.currentLevel);
                     // Only add gold reward on first completion
                     gameState.playerMoney = playerMoney + goldReward;
-                    gameState.playerDiamond = playerDiamond;
+                    gameState.playerDiamond = playerDiamond + diamondReward;
                     
                     console.log(`🎁 Level ${battleState.currentLevel} completed! Gold: ${goldReward}, Diamonds: ${diamondReward}`);
                 } else {
